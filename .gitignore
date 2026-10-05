@@ -1,0 +1,25 @@
+# Upstream code (cloned by setup.ps1, pinned in setup.ps1)
+/ComfyUI/
+/custom_nodes/ComfyUI-SUPIR/
+
+# Environment, caches, runtime data
+/venv/
+/cache/
+/tmp/
+/input/
+/output/
+__pycache__/
+*.pyc
+
+# Model weights (never commit; use download_model.py)
+/models/
+*.safetensors
+*.ckpt
+*.pt
+*.pth
+*.bin
+*.onnx
+*.gguf
+
+# Secrets
+.env

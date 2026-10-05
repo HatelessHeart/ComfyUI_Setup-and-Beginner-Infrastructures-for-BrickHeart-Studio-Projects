@@ -1,0 +1,1386 @@
+{
+  "last_node_id": 22,
+  "last_link_id": 37,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "DiffusersLoader",
+      "pos": [
+        80,
+        110
+      ],
+      "size": [
+        320,
+        95
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            1
+          ],
+          "shape": 3,
+          "slot_index": 0
+        },
+        {
+          "name": "CLIP",
+          "type": "CLIP",
+          "links": [
+            2,
+            3
+          ],
+          "shape": 3,
+          "slot_index": 1
+        },
+        {
+          "name": "VAE",
+          "type": "VAE",
+          "links": [
+            4
+          ],
+          "shape": 3,
+          "slot_index": 2
+        }
+      ],
+      "title": "Stage 1: Load SDXL Turbo",
+      "properties": {
+        "Node name for S&R": "DiffusersLoader"
+      },
+      "widgets_values": [
+        "sdxl-turbo"
+      ]
+    },
+    {
+      "id": 2,
+      "type": "CLIPTextEncode",
+      "pos": [
+        80,
+        240
+      ],
+      "size": [
+        370,
+        160
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": 2
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            5
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "title": "Stage 1: Positive Prompt (Base)",
+      "properties": {
+        "Node name for S&R": "CLIPTextEncode"
+      },
+      "widgets_values": [
+        "cinematic photorealistic shot of an astronaut riding a neon cybernetic horse on the surface of Mars, dramatic volumetric lighting, highly detailed, 8k resolution"
+      ]
+    },
+    {
+      "id": 3,
+      "type": "CLIPTextEncode",
+      "pos": [
+        80,
+        430
+      ],
+      "size": [
+        370,
+        130
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": 3
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            6
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "title": "Stage 1: Negative Prompt (Base)",
+      "properties": {
+        "Node name for S&R": "CLIPTextEncode"
+      },
+      "widgets_values": [
+        "blurry, low quality, distorted, artifacts, bad anatomy, deformed"
+      ]
+    },
+    {
+      "id": 4,
+      "type": "EmptyLatentImage",
+      "pos": [
+        480,
+        110
+      ],
+      "size": [
+        320,
+        110
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            7
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "title": "Stage 1: Empty Latent (512x512)",
+      "properties": {
+        "Node name for S&R": "EmptyLatentImage"
+      },
+      "widgets_values": [
+        512,
+        512,
+        1
+      ]
+    },
+    {
+      "id": 5,
+      "type": "KSampler",
+      "pos": [
+        480,
+        250
+      ],
+      "size": [
+        320,
+        260
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 1
+        },
+        {
+          "name": "positive",
+          "type": "CONDITIONING",
+          "link": 5
+        },
+        {
+          "name": "negative",
+          "type": "CONDITIONING",
+          "link": 6
+        },
+        {
+          "name": "latent_image",
+          "type": "LATENT",
+          "link": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            8
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "title": "Stage 1: KSampler (SDXL Turbo 2 Steps)",
+      "properties": {
+        "Node name for S&R": "KSampler"
+      },
+      "widgets_values": [
+        42,
+        "fixed",
+        2,
+        1.0,
+        "euler_ancestral",
+        "karras",
+        1.0
+      ]
+    },
+    {
+      "id": 6,
+      "type": "VAEDecode",
+      "pos": [
+        480,
+        540
+      ],
+      "size": [
+        220,
+        50
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "samples",
+          "type": "LATENT",
+          "link": 8
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 4
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            9
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "title": "Stage 1: VAE Decode (Base)",
+      "properties": {
+        "Node name for S&R": "VAEDecode"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 7,
+      "type": "SaveImage",
+      "pos": [
+        480,
+        620
+      ],
+      "size": [
+        340,
+        360
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 9
+        }
+      ],
+      "outputs": [],
+      "title": "Save Stage 1 Base Image",
+      "properties": {
+        "Node name for S&R": "SaveImage"
+      },
+      "widgets_values": [
+        "1_Base_SDXL_Turbo"
+      ]
+    },
+    {
+      "id": 8,
+      "type": "CheckpointLoaderSimple",
+      "pos": [
+        980,
+        110
+      ],
+      "size": [
+        320,
+        100
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            10,
+            23
+          ],
+          "shape": 3,
+          "slot_index": 0
+        },
+        {
+          "name": "CLIP",
+          "type": "CLIP",
+          "links": [
+            11,
+            12,
+            24
+          ],
+          "shape": 3,
+          "slot_index": 1
+        },
+        {
+          "name": "VAE",
+          "type": "VAE",
+          "links": [
+            13,
+            14,
+            25
+          ],
+          "shape": 3,
+          "slot_index": 2
+        }
+      ],
+      "title": "Stage 1.5 & 2: Load SDXL Base 1.0",
+      "properties": {
+        "Node name for S&R": "CheckpointLoaderSimple"
+      },
+      "widgets_values": [
+        "sd_xl_base_1.0.safetensors"
+      ]
+    },
+    {
+      "id": 9,
+      "type": "LoadImage",
+      "pos": [
+        980,
+        240
+      ],
+      "size": [
+        340,
+        360
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            15
+          ],
+          "shape": 3,
+          "slot_index": 0
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": [
+            16
+          ],
+          "shape": 3,
+          "slot_index": 1
+        }
+      ],
+      "title": "Stage 1.5: Mask Editor Bridge (Load Base Image)",
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "base_horse_render.png",
+        "image"
+      ]
+    },
+    {
+      "id": 10,
+      "type": "VAEEncodeForInpaint",
+      "pos": [
+        980,
+        640
+      ],
+      "size": [
+        320,
+        120
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "pixels",
+          "type": "IMAGE",
+          "link": 15
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 13
+        },
+        {
+          "name": "mask",
+          "type": "MASK",
+          "link": 16
+        }
+      ],
+      "outputs": [
+        {
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            17
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "title": "Stage 1.5: VAE Encode (for Inpainting)",
+      "properties": {
+        "Node name for S&R": "VAEEncodeForInpaint"
+      },
+      "widgets_values": [
+        6
+      ]
+    },
+    {
+      "id": 11,
+      "type": "CLIPTextEncode",
+      "pos": [
+        1360,
+        110
+      ],
+      "size": [
+        400,
+        170
+      ],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": 11
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            18
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "title": "Stage 1.5: Inpaint Positive Prompt",
+      "properties": {
+        "Node name for S&R": "CLIPTextEncode"
+      },
+      "widgets_values": [
+        "muscular horse front leg, horse anatomy, standing firmly on rock, realistic hooves, dusty canyon floor, dramatic volumetric lighting, highly detailed, 8k resolution"
+      ]
+    },
+    {
+      "id": 12,
+      "type": "CLIPTextEncode",
+      "pos": [
+        1360,
+        310
+      ],
+      "size": [
+        400,
+        130
+      ],
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": 12
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            19
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "title": "Stage 1.5: Inpaint Negative Prompt",
+      "properties": {
+        "Node name for S&R": "CLIPTextEncode"
+      },
+      "widgets_values": [
+        "blurry, low quality, distorted, missing leg, extra limbs, bad anatomy, deformed, mutated hooves"
+      ]
+    },
+    {
+      "id": 13,
+      "type": "KSampler",
+      "pos": [
+        1360,
+        470
+      ],
+      "size": [
+        320,
+        260
+      ],
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 10
+        },
+        {
+          "name": "positive",
+          "type": "CONDITIONING",
+          "link": 18
+        },
+        {
+          "name": "negative",
+          "type": "CONDITIONING",
+          "link": 19
+        },
+        {
+          "name": "latent_image",
+          "type": "LATENT",
+          "link": 17
+        }
+      ],
+      "outputs": [
+        {
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            20
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "title": "Stage 1.5: Inpaint KSampler (SDXL Base)",
+      "properties": {
+        "Node name for S&R": "KSampler"
+      },
+      "widgets_values": [
+        42,
+        "fixed",
+        25,
+        6.0,
+        "dpmpp_2m",
+        "karras",
+        0.75
+      ]
+    },
+    {
+      "id": 14,
+      "type": "VAEDecode",
+      "pos": [
+        1360,
+        760
+      ],
+      "size": [
+        220,
+        50
+      ],
+      "flags": {},
+      "order": 13,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "samples",
+          "type": "LATENT",
+          "link": 20
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 14
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            21,
+            22
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "title": "Stage 1.5: Inpaint VAE Decode",
+      "properties": {
+        "Node name for S&R": "VAEDecode"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 15,
+      "type": "SaveImage",
+      "pos": [
+        1360,
+        840
+      ],
+      "size": [
+        340,
+        360
+      ],
+      "flags": {},
+      "order": 14,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 21
+        }
+      ],
+      "outputs": [],
+      "title": "Save Stage 1.5 Inpainted Image",
+      "properties": {
+        "Node name for S&R": "SaveImage"
+      },
+      "widgets_values": [
+        "1.5_Inpainted_SDXL_Base"
+      ]
+    },
+    {
+      "id": 16,
+      "type": "ImageScaleBy",
+      "pos": [
+        1900,
+        110
+      ],
+      "size": [
+        320,
+        90
+      ],
+      "flags": {},
+      "order": 15,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 22
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            26,
+            27
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "title": "Stage 2: Pre-Scale 2x (1024x1024)",
+      "properties": {
+        "Node name for S&R": "ImageScaleBy"
+      },
+      "widgets_values": [
+        "bicubic",
+        2.0
+      ]
+    },
+    {
+      "id": 17,
+      "type": "SUPIR_model_loader_v2",
+      "pos": [
+        1900,
+        230
+      ],
+      "size": [
+        320,
+        220
+      ],
+      "flags": {},
+      "order": 16,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 23
+        },
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": 24
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 25
+        }
+      ],
+      "outputs": [
+        {
+          "name": "SUPIR_model",
+          "type": "SUPIRMODEL",
+          "links": [
+            28,
+            29
+          ],
+          "shape": 3,
+          "slot_index": 0
+        },
+        {
+          "name": "SUPIR_VAE",
+          "type": "SUPIRVAE",
+          "links": [
+            30,
+            31
+          ],
+          "shape": 3,
+          "slot_index": 1
+        }
+      ],
+      "title": "Stage 2: SUPIR Model Loader v2 (FP8)",
+      "properties": {
+        "Node name for S&R": "SUPIR_model_loader_v2"
+      },
+      "widgets_values": [
+        "SUPIR-v0Q_fp16.safetensors",
+        true,
+        "fp16",
+        false
+      ]
+    },
+    {
+      "id": 18,
+      "type": "SUPIR_encode",
+      "pos": [
+        1900,
+        480
+      ],
+      "size": [
+        320,
+        120
+      ],
+      "flags": {},
+      "order": 17,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "SUPIR_VAE",
+          "type": "SUPIRVAE",
+          "link": 30
+        },
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 26
+        }
+      ],
+      "outputs": [
+        {
+          "name": "latent",
+          "type": "LATENT",
+          "links": [
+            32,
+            33
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "title": "Stage 2: SUPIR Tiled Encode",
+      "properties": {
+        "Node name for S&R": "SUPIR_encode"
+      },
+      "widgets_values": [
+        true,
+        512,
+        "auto"
+      ]
+    },
+    {
+      "id": 19,
+      "type": "SUPIR_conditioner",
+      "pos": [
+        2260,
+        110
+      ],
+      "size": [
+        400,
+        260
+      ],
+      "flags": {},
+      "order": 18,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "SUPIR_model",
+          "type": "SUPIRMODEL",
+          "link": 28
+        },
+        {
+          "name": "latents",
+          "type": "LATENT",
+          "link": 32
+        }
+      ],
+      "outputs": [
+        {
+          "name": "positive",
+          "type": "SUPIR_cond_pos",
+          "links": [
+            34
+          ],
+          "shape": 3,
+          "slot_index": 0
+        },
+        {
+          "name": "negative",
+          "type": "SUPIR_cond_neg",
+          "links": [
+            35
+          ],
+          "shape": 3,
+          "slot_index": 1
+        }
+      ],
+      "title": "Stage 2: SUPIR Conditioner",
+      "properties": {
+        "Node name for S&R": "SUPIR_conditioner"
+      },
+      "widgets_values": [
+        "photorealistic, cinematic, highly detailed, sharp focus, 8k uhd, exquisite textures, cinematic lighting",
+        "blurry, low quality, artifacts, distorted, noisy, oversaturated, deformed"
+      ]
+    },
+    {
+      "id": 20,
+      "type": "SUPIR_sample",
+      "pos": [
+        2260,
+        400
+      ],
+      "size": [
+        360,
+        420
+      ],
+      "flags": {},
+      "order": 19,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "SUPIR_model",
+          "type": "SUPIRMODEL",
+          "link": 29
+        },
+        {
+          "name": "latents",
+          "type": "LATENT",
+          "link": 33
+        },
+        {
+          "name": "positive",
+          "type": "SUPIR_cond_pos",
+          "link": 34
+        },
+        {
+          "name": "negative",
+          "type": "SUPIR_cond_neg",
+          "link": 35
+        }
+      ],
+      "outputs": [
+        {
+          "name": "latent",
+          "type": "LATENT",
+          "links": [
+            36
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "title": "Stage 2: SUPIR Sampler (25 Steps, s_churn=0, s_noise=1.0)",
+      "properties": {
+        "Node name for S&R": "SUPIR_sample"
+      },
+      "widgets_values": [
+        42,
+        "fixed",
+        25,
+        3.0,
+        3.0,
+        0,
+        1.0,
+        1.0,
+        0.0,
+        1.0,
+        -1.0,
+        false,
+        "RestoreEDMSampler",
+        1024,
+        512
+      ]
+    },
+    {
+      "id": 21,
+      "type": "SUPIR_decode",
+      "pos": [
+        1900,
+        630
+      ],
+      "size": [
+        320,
+        140
+      ],
+      "flags": {},
+      "order": 20,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "SUPIR_VAE",
+          "type": "SUPIRVAE",
+          "link": 31
+        },
+        {
+          "name": "latents",
+          "type": "LATENT",
+          "link": 36
+        },
+        {
+          "name": "original_image",
+          "type": "IMAGE",
+          "link": 27
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            37
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "title": "Stage 2: SUPIR Tiled Decode (Wavelet Color Fix)",
+      "properties": {
+        "Node name for S&R": "SUPIR_decode"
+      },
+      "widgets_values": [
+        true,
+        512,
+        "auto",
+        "Wavelet"
+      ]
+    },
+    {
+      "id": 22,
+      "type": "SaveImage",
+      "pos": [
+        2260,
+        850
+      ],
+      "size": [
+        380,
+        460
+      ],
+      "flags": {},
+      "order": 21,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 37
+        }
+      ],
+      "outputs": [],
+      "title": "Save Stage 2 Final SUPIR Output",
+      "properties": {
+        "Node name for S&R": "SaveImage"
+      },
+      "widgets_values": [
+        "2_SUPIR_Upscale_Final"
+      ]
+    }
+  ],
+  "links": [
+    [
+      1,
+      1,
+      0,
+      5,
+      0,
+      "MODEL"
+    ],
+    [
+      2,
+      1,
+      1,
+      2,
+      0,
+      "CLIP"
+    ],
+    [
+      3,
+      1,
+      1,
+      3,
+      0,
+      "CLIP"
+    ],
+    [
+      4,
+      1,
+      2,
+      6,
+      1,
+      "VAE"
+    ],
+    [
+      5,
+      2,
+      0,
+      5,
+      1,
+      "CONDITIONING"
+    ],
+    [
+      6,
+      3,
+      0,
+      5,
+      2,
+      "CONDITIONING"
+    ],
+    [
+      7,
+      4,
+      0,
+      5,
+      3,
+      "LATENT"
+    ],
+    [
+      8,
+      5,
+      0,
+      6,
+      0,
+      "LATENT"
+    ],
+    [
+      9,
+      6,
+      0,
+      7,
+      0,
+      "IMAGE"
+    ],
+    [
+      10,
+      8,
+      0,
+      13,
+      0,
+      "MODEL"
+    ],
+    [
+      11,
+      8,
+      1,
+      11,
+      0,
+      "CLIP"
+    ],
+    [
+      12,
+      8,
+      1,
+      12,
+      0,
+      "CLIP"
+    ],
+    [
+      13,
+      8,
+      2,
+      10,
+      1,
+      "VAE"
+    ],
+    [
+      14,
+      8,
+      2,
+      14,
+      1,
+      "VAE"
+    ],
+    [
+      15,
+      9,
+      0,
+      10,
+      0,
+      "IMAGE"
+    ],
+    [
+      16,
+      9,
+      1,
+      10,
+      2,
+      "MASK"
+    ],
+    [
+      17,
+      10,
+      0,
+      13,
+      3,
+      "LATENT"
+    ],
+    [
+      18,
+      11,
+      0,
+      13,
+      1,
+      "CONDITIONING"
+    ],
+    [
+      19,
+      12,
+      0,
+      13,
+      2,
+      "CONDITIONING"
+    ],
+    [
+      20,
+      13,
+      0,
+      14,
+      0,
+      "LATENT"
+    ],
+    [
+      21,
+      14,
+      0,
+      15,
+      0,
+      "IMAGE"
+    ],
+    [
+      22,
+      14,
+      0,
+      16,
+      0,
+      "IMAGE"
+    ],
+    [
+      23,
+      8,
+      0,
+      17,
+      0,
+      "MODEL"
+    ],
+    [
+      24,
+      8,
+      1,
+      17,
+      1,
+      "CLIP"
+    ],
+    [
+      25,
+      8,
+      2,
+      17,
+      2,
+      "VAE"
+    ],
+    [
+      26,
+      16,
+      0,
+      18,
+      1,
+      "IMAGE"
+    ],
+    [
+      27,
+      16,
+      0,
+      21,
+      2,
+      "IMAGE"
+    ],
+    [
+      28,
+      17,
+      0,
+      19,
+      0,
+      "SUPIRMODEL"
+    ],
+    [
+      29,
+      17,
+      0,
+      20,
+      0,
+      "SUPIRMODEL"
+    ],
+    [
+      30,
+      17,
+      1,
+      18,
+      0,
+      "SUPIRVAE"
+    ],
+    [
+      31,
+      17,
+      1,
+      21,
+      0,
+      "SUPIRVAE"
+    ],
+    [
+      32,
+      18,
+      0,
+      19,
+      1,
+      "LATENT"
+    ],
+    [
+      33,
+      18,
+      0,
+      20,
+      1,
+      "LATENT"
+    ],
+    [
+      34,
+      19,
+      0,
+      20,
+      2,
+      "SUPIR_cond_pos"
+    ],
+    [
+      35,
+      19,
+      1,
+      20,
+      3,
+      "SUPIR_cond_neg"
+    ],
+    [
+      36,
+      20,
+      0,
+      21,
+      1,
+      "LATENT"
+    ],
+    [
+      37,
+      21,
+      0,
+      22,
+      0,
+      "IMAGE"
+    ]
+  ],
+  "groups": [
+    {
+      "id": 1,
+      "title": "Stage 1: SDXL Turbo Base Generation (512x512)",
+      "bounding": [
+        50,
+        40,
+        840,
+        1350
+      ],
+      "color": "#1e3a5f",
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "id": 2,
+      "title": "Stage 1.5: Inpaint & Anatomical Correction (Mask Editor)",
+      "bounding": [
+        950,
+        40,
+        870,
+        1350
+      ],
+      "color": "#8a6012",
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "id": 3,
+      "title": "Stage 2: SUPIR Photorealistic Upscale (1024x1024)",
+      "bounding": [
+        1870,
+        40,
+        970,
+        1350
+      ],
+      "color": "#1b5e3a",
+      "font_size": 24,
+      "flags": {}
+    }
+  ],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.65,
+      "offset": [
+        -20,
+        20
+      ]
+    }
+  },
+  "version": 0.4
+}

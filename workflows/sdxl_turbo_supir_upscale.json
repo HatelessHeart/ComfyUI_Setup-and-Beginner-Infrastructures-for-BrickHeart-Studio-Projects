@@ -1,0 +1,264 @@
+{
+  "1": {
+    "class_type": "DiffusersLoader",
+    "inputs": {
+      "model_path": "sdxl-turbo"
+    },
+    "_meta": {
+      "title": "Stage 1: Load SDXL Turbo"
+    }
+  },
+  "2": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "cinematic photorealistic shot of an astronaut riding a neon cybernetic horse on the surface of Mars, dramatic volumetric lighting, highly detailed, 8k resolution",
+      "clip": [
+        "1",
+        1
+      ]
+    },
+    "_meta": {
+      "title": "Stage 1: Positive Prompt"
+    }
+  },
+  "3": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "blurry, low quality, distorted, artifacts, bad anatomy, deformed",
+      "clip": [
+        "1",
+        1
+      ]
+    },
+    "_meta": {
+      "title": "Stage 1: Negative Prompt"
+    }
+  },
+  "4": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+      "width": 512,
+      "height": 512,
+      "batch_size": 1
+    },
+    "_meta": {
+      "title": "Stage 1: Empty Latent (512x512)"
+    }
+  },
+  "5": {
+    "class_type": "KSampler",
+    "inputs": {
+      "model": [
+        "1",
+        0
+      ],
+      "positive": [
+        "2",
+        0
+      ],
+      "negative": [
+        "3",
+        0
+      ],
+      "latent_image": [
+        "4",
+        0
+      ],
+      "seed": 42,
+      "steps": 2,
+      "cfg": 1.0,
+      "sampler_name": "euler_ancestral",
+      "scheduler": "karras",
+      "denoise": 1.0
+    },
+    "_meta": {
+      "title": "Stage 1: KSampler (SDXL Turbo)"
+    }
+  },
+  "6": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "5",
+        0
+      ],
+      "vae": [
+        "1",
+        2
+      ]
+    },
+    "_meta": {
+      "title": "Stage 1: VAE Decode (Base Image)"
+    }
+  },
+  "7": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "1_Base_SDXL_Turbo",
+      "images": [
+        "6",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Save Base Image (512x512)"
+    }
+  },
+  "8": {
+    "class_type": "ImageScaleBy",
+    "inputs": {
+      "image": [
+        "6",
+        0
+      ],
+      "upscale_method": "bicubic",
+      "scale_by": 2.0
+    },
+    "_meta": {
+      "title": "Stage 2: Pre-Scale 2x (1024x1024)"
+    }
+  },
+  "9": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+      "ckpt_name": "sd_xl_base_1.0.safetensors"
+    },
+    "_meta": {
+      "title": "Stage 2: Load SDXL Base 1.0 (SUPIR Backbone)"
+    }
+  },
+  "10": {
+    "class_type": "SUPIR_model_loader_v2",
+    "inputs": {
+      "model": [
+        "9",
+        0
+      ],
+      "clip": [
+        "9",
+        1
+      ],
+      "vae": [
+        "9",
+        2
+      ],
+      "supir_model": "SUPIR-v0Q_fp16.safetensors",
+      "fp8_unet": true,
+      "diffusion_dtype": "fp16",
+      "high_vram": false
+    },
+    "_meta": {
+      "title": "Stage 2: SUPIR Model Loader v2 (SDXL Base Backbone + FP8)"
+    }
+  },
+  "11": {
+    "class_type": "SUPIR_encode",
+    "inputs": {
+      "SUPIR_VAE": [
+        "10",
+        1
+      ],
+      "image": [
+        "8",
+        0
+      ],
+      "use_tiled_vae": true,
+      "encoder_tile_size": 512,
+      "encoder_dtype": "auto"
+    },
+    "_meta": {
+      "title": "Stage 2: SUPIR Tiled Encode"
+    }
+  },
+  "12": {
+    "class_type": "SUPIR_conditioner",
+    "inputs": {
+      "SUPIR_model": [
+        "10",
+        0
+      ],
+      "latents": [
+        "11",
+        0
+      ],
+      "positive_prompt": "photorealistic, cinematic, highly detailed, sharp focus, 8k uhd, exquisite textures, cinematic lighting",
+      "negative_prompt": "blurry, low quality, artifacts, distorted, noisy, oversaturated, deformed"
+    },
+    "_meta": {
+      "title": "Stage 2: SUPIR Conditioner"
+    }
+  },
+  "13": {
+    "class_type": "SUPIR_sample",
+    "inputs": {
+      "SUPIR_model": [
+        "10",
+        0
+      ],
+      "latents": [
+        "11",
+        0
+      ],
+      "positive": [
+        "12",
+        0
+      ],
+      "negative": [
+        "12",
+        1
+      ],
+      "seed": 42,
+      "steps": 25,
+      "cfg_scale_start": 3.0,
+      "cfg_scale_end": 3.0,
+      "EDM_s_churn": 0,
+      "s_noise": 1.0,
+      "DPMPP_eta": 1.0,
+      "control_scale_start": 0.0,
+      "control_scale_end": 1.0,
+      "restore_cfg": -1.0,
+      "keep_model_loaded": false,
+      "sampler": "RestoreEDMSampler"
+    },
+    "_meta": {
+      "title": "Stage 2: SUPIR Sampler (25 Steps, s_churn=0, s_noise=1.0)"
+    }
+  },
+  "14": {
+    "class_type": "SUPIR_decode",
+    "inputs": {
+      "SUPIR_VAE": [
+        "10",
+        1
+      ],
+      "latents": [
+        "13",
+        0
+      ],
+      "use_tiled_vae": true,
+      "decoder_tile_size": 512,
+      "decoder_dtype": "auto",
+      "color_fix_type": "Wavelet",
+      "original_image": [
+        "8",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Stage 2: SUPIR Tiled Decode with Wavelet Color Fix"
+    }
+  },
+  "15": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "2_SUPIR_SDXL_Base_Clean",
+      "images": [
+        "14",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Save Clean High-Res Output (1024x1024)"
+    }
+  }
+}
