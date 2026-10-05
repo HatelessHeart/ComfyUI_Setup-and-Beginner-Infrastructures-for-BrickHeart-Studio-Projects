@@ -15,6 +15,7 @@ $argsList = @(
     "ComfyUI\main.py",
     "--listen", "127.0.0.1",
     "--port", "8188",
+    "--windows-standalone-build",
     "--output-directory", "$PSScriptRoot\output",
     "--input-directory", "$PSScriptRoot\input",
     "--temp-directory", "$PSScriptRoot\tmp"
