@@ -25,7 +25,7 @@ The question: how do we make this available to others? Plugin, or something else
 Leaning: option 3, starting by making the extension independently installable.
 
 ### To-dos before sharing
-- [ ] Decide the name, repo layout and which license applies to the extension (repo is MIT-scoped; check `LICENSE`, `THIRD_PARTY_NOTICES.md`, `docs/PROJECTS_LICENSE_REGISTER.csv`).
+- [ ] Decide the name, repo layout and which license applies to the extension (repo is currently ALL RIGHTS RESERVED, provisional; was MIT until the owner changed it, see git history; check `LICENSE`, `THIRD_PARTY_NOTICES.md`, `docs/PROJECTS_LICENSE_REGISTER.csv`).
 - [ ] Add packaging metadata for the Comfy Registry / Manager (e.g. `pyproject.toml`) and an extension-level README with screenshots. **Verify the current registry requirements first; do not assume.**
 - [ ] Test across ComfyUI frontend versions. Known risk: the wire-drag detection and widget positions differ between builds (see Verification below).
 - [ ] Make the extension self-contained: it must not assume this repo's templates exist (tour already skips missing nodes; add a friendly empty state).
@@ -118,3 +118,4 @@ Owner: the projects are mostly the owner's own code, built on open-source repos 
 - [ ] Claude: draft updated rows for `docs/PROJECTS_LICENSE_REGISTER.csv` from the scan; owner confirms each model's license on its source page (the scanner cannot see licenses of models downloaded without a model card).
 - [ ] Add a `LICENSE` to every project the owner intends to share (currently several show NONE, e.g. "Add B2M PBR workflow and AO", "3D viewer").
 - Correction: "Add B2M PBR workflow and AO" is a desktop app (ModernGL/PySide6) that turns albedo projections into normal/roughness/metallic/height/AO maps, not a ComfyUI workflow. Integrate by file hand-off (ComfyUI writes albedo + manifest, the app reads them); needs its entry script and CLI options from Gemini.
+- **Decision (owner):** this repo's `LICENSE` is now *All rights reserved* (provisional) until the licenses of the upstream repos and models used by the studio's projects have been reviewed. Earlier commits carried an MIT license; anyone who already copied the repo while it was MIT keeps those rights for that copy.

@@ -1,26 +1,14 @@
-MIT License
+Copyright (c) 2026 BrickHeart Studio. All rights reserved.
 
-Copyright (c) 2026 BrickHeart Studio
+No permission is granted to use, copy, modify, merge, publish, distribute,
+sublicense, or sell this software or any of the associated files, in whole or
+in part, without prior written permission from the copyright holder.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Scope: this notice covers only the original files in this repository (scripts,
+workflows, tooltips and tour extension, depth tools, and tooling). It does NOT
+cover ComfyUI, ComfyUI-SUPIR, any other third-party code, or any model weights.
+Those are not distributed here, are fetched separately, and keep their own
+licenses; see THIRD_PARTY_NOTICES.md.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
-Scope: this license covers only the original files in this repository (scripts,
-workflows, tooltips extension). It does NOT cover ComfyUI, ComfyUI-SUPIR, or any
-model weights, which are fetched separately and keep their own licenses.
-See THIRD_PARTY_NOTICES.md.
+This status is provisional: the licenses of the upstream repositories and models
+used by the studio's projects are still being reviewed.
