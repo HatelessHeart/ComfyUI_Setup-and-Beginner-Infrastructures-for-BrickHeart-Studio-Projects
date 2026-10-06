@@ -22,13 +22,11 @@ An isolated, reproducible ComfyUI workspace with beginner-friendly workflows, ho
 
 UI versions (`*_ui.json`) have colour-coded groups; load them via **Load** in the web UI.
 
-## Spatial Pilot & Teaching HUD (In-Browser)
+## Guided Tour & Spatial Pilot HUD (In-Browser)
 
-An interactive, zero-token spatial grounding overlay for visual learning and teaching:
-* **Draggable & Minimizable HUD:** Move it anywhere on the canvas so it never blocks nodes. Collapse to a floating pill with `−` / `+`.
-* **Zero-Token Prompt Search:** Type any keyword (e.g. `denoise`, `seed`, `supir`, `mask`) into the HUD prompt bar. It queries the local LiteGraph DOM in 0.1ms at 0 API cost, centers the canvas, and spotlights the exact slider or widget.
-* **Hands-Free Voice Prompts:** Uses Chrome's built-in Web Speech API (`webkitSpeechRecognition`) for hands-free voice search.
-* **Alphanumeric Grid Overlay (`G`):** Divides the 2K/4K viewport into discrete coordinate blocks (`A1` to `T12`) with sub-pixel mathematical accuracy. Toggle with the `G` key.
+Teaching overlays shipped by `custom_nodes/comfyui-ui-tooltips` (all local, zero API cost):
+* **Guided Tour (`teach_tour.js`):** click **🎓 Learn this workflow** (bottom-left) or **▶ Start Guided Tour** in the HUD. The camera glides to each real node in turn, the rest of the screen dims, the key setting is ringed in gold, and a card explains what it does, why, and a "Try it" experiment. `←` `→` move, `Esc` exits. The highlight tracks pan/zoom, and steps for nodes missing from the loaded workflow are skipped, so it works on templates 01–03. Teaching copy is the `STEPS` list at the top of the file; per-setting text comes from the same tooltips as hover help.
+* **Spatial Pilot HUD (`spatial_grid.js`):** draggable/minimizable panel with a keyword finder (`denoise`, `seed`, `supir`) that centers the canvas on the match, optional Chrome voice input, and an alphanumeric grid overlay (`G`, cells `A1`–`T12`).
 
 ## Quick start
 

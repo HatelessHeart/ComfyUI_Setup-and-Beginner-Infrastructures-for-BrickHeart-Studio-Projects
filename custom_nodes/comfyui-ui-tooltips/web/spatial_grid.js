@@ -58,7 +58,7 @@ app.registerExtension({
         header.style.cursor = "grab";
 
         const title = document.createElement("div");
-        title.innerHTML = "<b>SPATIAL PILOT</b> <span style='font-size:10px; color:#00e5ff;'>[DEVTOOLS]</span>";
+        title.innerHTML = "<b>SPATIAL PILOT</b> <span style='font-size:10px; color:#00e5ff;'>[GUIDE]</span>";
         header.appendChild(title);
 
         const btnGroup = document.createElement("div");
@@ -183,10 +183,11 @@ app.registerExtension({
 
                 // Spotlight the node's current screen position
                 if (window.BrickHeartGrid) {
-                    // Compute node center in screen coords
+                    // LiteGraph maps canvas->screen as (pos + offset) * scale
                     const canvasBox = app.canvas.canvas ? app.canvas.canvas.getBoundingClientRect() : { left: 0, top: 0 };
-                    const screenX = canvasBox.left + (matchedNode.pos[0] + matchedNode.size[0] / 2) * app.canvas.ds.scale + app.canvas.ds.offset[0];
-                    const screenY = canvasBox.top + (matchedNode.pos[1] + matchedNode.size[1] / 2) * app.canvas.ds.scale + app.canvas.ds.offset[1];
+                    const ds = app.canvas.ds;
+                    const screenX = canvasBox.left + (matchedNode.pos[0] + matchedNode.size[0] / 2 + ds.offset[0]) * ds.scale;
+                    const screenY = canvasBox.top + (matchedNode.pos[1] + matchedNode.size[1] / 2 + ds.offset[1]) * ds.scale;
                     const cell = window.BrickHeartGrid.coordsToCell(
                         Math.max(0, Math.min(window.innerWidth - 1, screenX)),
                         Math.max(0, Math.min(window.innerHeight - 1, screenY))
@@ -249,7 +250,7 @@ app.registerExtension({
 
         // Quick Teaching Spotlights
         const sectionTitle = document.createElement("div");
-        sectionTitle.innerText = "TEACHING SPOTLIGHTS:";
+        sectionTitle.innerText = "LEARN:";
         sectionTitle.style.fontSize = "10px";
         sectionTitle.style.fontWeight = "bold";
         sectionTitle.style.color = "#4dd0e1";
@@ -261,32 +262,18 @@ app.registerExtension({
         spotGrid.style.gridTemplateColumns = "1fr 1fr";
         spotGrid.style.gap = "6px";
 
-        const targets = [
-            { id: "turbo", name: "Stage 1 (Turbo)", cell: "D6" },
-            { id: "inpaint", name: "Stage 1.5 (Inpaint)", cell: "H7" },
-            { id: "supir", name: "Stage 2 (SUPIR)", cell: "K6" },
-            { id: "queue", name: "Queue Button", cell: "R2" }
-        ];
-
-        targets.forEach(t => {
-            const btn = document.createElement("button");
-            btn.innerText = t.name;
-            btn.style.background = "rgba(0, 229, 255, 0.08)";
-            btn.style.color = "#e0f7fa";
-            btn.style.border = "1px solid rgba(0, 229, 255, 0.3)";
-            btn.style.borderRadius = "4px";
-            btn.style.padding = "5px";
-            btn.style.fontSize = "10px";
-            btn.style.cursor = "pointer";
-            btn.onmouseover = () => btn.style.borderColor = "#00e5ff";
-            btn.onmouseout = () => btn.style.borderColor = "rgba(0, 229, 255, 0.3)";
-            btn.onclick = () => {
-                if (window.BrickHeartGrid) {
-                    window.BrickHeartGrid.spotlight(t.cell, t.name);
-                }
-            };
-            spotGrid.appendChild(btn);
-        });
+        const tourBtn = document.createElement("button");
+        tourBtn.innerText = "▶ Start Guided Tour";
+        tourBtn.style.background = "#00838f";
+        tourBtn.style.color = "#ffffff";
+        tourBtn.style.border = "1px solid #00e5ff";
+        tourBtn.style.borderRadius = "5px";
+        tourBtn.style.padding = "7px";
+        tourBtn.style.fontWeight = "bold";
+        tourBtn.style.cursor = "pointer";
+        tourBtn.onclick = () => { if (window.BrickHeartTour) window.BrickHeartTour.start(); };
+        spotGrid.style.gridTemplateColumns = "1fr";
+        spotGrid.appendChild(tourBtn);
         body.appendChild(spotGrid);
 
         // Clear Spotlights Button
