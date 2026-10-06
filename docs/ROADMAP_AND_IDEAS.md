@@ -69,3 +69,17 @@ Where the content comes from (be explicit with learners):
 - "Why is my output bad?" troubleshooting checklist overlay keyed to the Lessons Learned in the README.
 - Show estimated VRAM impact for model choices (FP8, tiled VAE) in the helper rows.
 - Localization of tour/tooltip text.
+
+---
+
+## 3D & multi-view track  **[next]**  (from Gemini's scan of `G:\DEVstuFF\NEW`, 216 workflows)
+
+Scan facts (from `workflow_report.md`): 216 files, but 122 sit inside `ComfyUI_Test\ComfyUI` and 44 inside `3DSTUDIO\setup` (likely bundled/third-party examples). The studio's own set is ~43 files (`3DSTUDIO\comfyui_workflows` 32, `ComfyUI_Test\workflows` 8, `templates` 3). Those 43 use 96 node types without curated tooltip text. The top 10 missing types fully cover only 11 of the 43. The long tail is pack-specific (Trellis2*, Hy3D*, Meshflow*).
+
+Decisions / to-dos:
+- [ ] **Tooltips, tiered:** (1) curate ~30 shared core types by hand (loaders, GGUF, custom-sampler stack, masks, Qwen/Flux2 helpers); (2) pack-specific nodes get an **auto-generated** description (author text from `/object_info`, else a sentence built from input/output types and widgets); (3) teach pipelines at **track level**, not node by node.
+- [ ] **Tour tracks:** make the tour data-driven (`tours/<track>.json`: match rules + steps selected by type/title/nth), auto-pick the best-matching track, let the learner choose. First tracks: 2D Starter (exists), Flux2/Qwen custom-sampler generation, Trellis2 mesh, mesh-projection texturing.
+- [ ] **Stage templates for the multi-view -> 3DGS idea:** small stage workflows with a file contract (images + `manifest.json` of view id, azimuth/elevation, seed, prompt) under `templates/3d/`, not one giant graph. Start by mapping the existing `3DSTUDIO` workflows onto the stages.
+- [ ] **Keep long-running training outside ComfyUI** (COLMAP / 3DGS optimisation / mesh extraction): hand off by folder + manifest, launched by a human-confirmed script in the same spirit as `download_model.py`.
+- [ ] **Risks to resolve before building:** per-view SUPIR may hallucinate different detail in each view and hurt multi-view consistency; generated views have only nominal camera poses (pose refinement may be needed); depth-edge thresholds must scale with the scene, not a fixed metres value; verify each external tool's real capabilities and **licenses** before relying on or sharing them (see `docs/PROJECTS_LICENSE_REGISTER.csv`); 12 GB VRAM means stages run one at a time with unloads.
+- [ ] Housekeeping: `workflow_report.md` (222 KB, contains local paths) is in the repo root; move under `docs/reports/` or untrack it before the repo is shared.
