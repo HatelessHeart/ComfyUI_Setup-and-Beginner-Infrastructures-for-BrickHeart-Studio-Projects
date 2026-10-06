@@ -13,6 +13,7 @@ An isolated, reproducible ComfyUI workspace with beginner-friendly workflows, ho
 | `custom_nodes/comfyui-ui-tooltips` | Frontend extension: hover explanations for nodes/sockets/widgets, guided tour, connection helper, finder HUD |
 | `templates/`, `workflows/` | Workflow JSONs (API + UI canvas) and canvas previews |
 | `tools/inspect_workflows.py` | Read-only report: how the tour and tooltips will treat any folder of your workflow JSONs |
+| `tools/extract_track_facts.py` | Read-only: dumps a workflow's node chain, wiring, values and node-catalogue descriptions so a tour track can be written accurately |
 | `dispatch_workflow.py` | Submits an API-format workflow to the running server |
 
 ## Workflows
