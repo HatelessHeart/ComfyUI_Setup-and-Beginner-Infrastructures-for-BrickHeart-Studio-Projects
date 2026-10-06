@@ -150,11 +150,35 @@ function findWidget(node, focus) {
     return null;
 }
 function widgetRect(node, focus) {
+    const names = [].concat(focus || []);
+    if (!node || !names.length) return null;
+    const vis = (b) => b.width > 4 && b.height > 4;
+
+    // 1) Vue-rendered nodes (newer frontends): widgets are real DOM rows. Prefer an exact label match,
+    //    then a whole-word match, so "steps" never lands on "start_at_step".
+    const nodeEl = document.querySelector(`[data-node-id='${node.id}']`);
+    if (nodeEl) {
+        const rows = Array.from(nodeEl.querySelectorAll(".lg-node-widget"));
+        const norm = (t) => (t || "").toLowerCase().replace(/[\s_]+/g, " ").trim();
+        for (const name of names) {
+            const want = norm(name);
+            const hit = rows.find(r => norm(r.textContent) === want || norm(r.querySelector("label, .lg-node-widget-label, span")?.textContent) === want)
+                || rows.find(r => new RegExp(`(^|\\s)${want.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(\\s|$)`).test(norm(r.textContent)));
+            if (hit) {
+                const b = hit.getBoundingClientRect();
+                if (vis(b)) return { x: b.left, y: b.top, w: b.width, h: b.height };
+            }
+        }
+    }
+
+    // 2) Canvas-drawn widgets: vertical offset lives in last_y (classic) or y (current), relative to the node body.
     const w = findWidget(node, focus);
-    if (!w || typeof w.last_y !== "number") return null;
+    if (!w) return null;
+    const wy = typeof w.last_y === "number" ? w.last_y : (typeof w.y === "number" ? w.y : null);
+    if (wy === null) return null;
     const s = app.canvas.ds.scale;
-    const wh = (window.LiteGraph && window.LiteGraph.NODE_WIDGET_HEIGHT) || 20;
-    const [x, y] = toScreen(node.pos[0] + 6, node.pos[1] + w.last_y);
+    const wh = w.computedHeight || (window.LiteGraph && window.LiteGraph.NODE_WIDGET_HEIGHT) || 20;
+    const [x, y] = toScreen(node.pos[0] + 6, node.pos[1] + wy);
     return { x, y, w: (node.size[0] - 12) * s, h: wh * s };
 }
 
@@ -338,10 +362,16 @@ app.registerExtension({
         }
 
         function queueButtonRect() {
-            const el = document.querySelector("#queue-button, [data-testid='queue-button'], .comfy-menu button");
-            if (!el) return null;
-            const r = el.getBoundingClientRect();
-            return r.width ? { x: r.left, y: r.top, w: r.width, h: r.height } : null;
+            // Several matches can exist (a hidden 0x0 legacy button comes first in some builds):
+            // take the first one that is actually visible.
+            const selectors = ["[data-testid='queue-button']", ".queue-button-group button", "#queue-button", ".comfy-menu button"];
+            for (const sel of selectors) {
+                for (const el of document.querySelectorAll(sel)) {
+                    const r = el.getBoundingClientRect();
+                    if (r.width > 20 && r.height > 20) return { x: r.left, y: r.top, w: r.width, h: r.height };
+                }
+            }
+            return null;
         }
 
         function drawFrame() {

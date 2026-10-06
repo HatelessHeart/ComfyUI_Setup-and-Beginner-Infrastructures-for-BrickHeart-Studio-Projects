@@ -37,6 +37,8 @@ Teaching overlays shipped by `custom_nodes/comfyui-ui-tooltips` (all local, zero
   * The panel stays open after you release the wire. `↻` re-scans after you add models or custom nodes; `Esc` closes. Wildcard (`*`) sockets and deprecated nodes are never suggested. Console: `BrickHeartConnect.debug()` shows which drag fields your ComfyUI build exposes.
 * **Tooltips on almost everything:** curated text for sockets, widgets and core/SUPIR/inpaint nodes; any other installed node (including custom nodes) falls back to its author's own description or its category; unknown widgets get a type-based explanation. The tour, HUD and helper controls all carry their own tooltips.
 
+See [`docs/ROADMAP_AND_IDEAS.md`](docs/ROADMAP_AND_IDEAS.md) for the roadmap, open to-dos and ideas (including how to share this with others).
+
 ## Quick start
 
 ```powershell
