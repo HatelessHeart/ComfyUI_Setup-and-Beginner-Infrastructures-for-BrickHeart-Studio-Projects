@@ -109,3 +109,12 @@ Risks: seams between views, lighting baked into texture (use flat/unlit passes),
 - [ ] Decide the depth source for the studio: depth-estimation node vs depth pass rendered from the mesh (exact). Add a template wiring Depth Slice into the mesh-projection pass (as position guide) once decided.
 - [ ] Possible follow-ups: depth to normal map; slice by absolute distance (not fraction) when the depth is metric; a tour track for the depth tools.
 - Interpretation note: "slice the fractal" was read as "slice a fraction of the depth range". Confirm with owner.
+
+### Licensing review (before sharing or selling anything)
+Owner: the projects are mostly the owner's own code, built on open-source repos and third-party trained models. Own code needs its own `LICENSE`; upstream repos and **model weights** carry separate terms (the usual blocker for commercial use).
+- [x] `tools/scan_licenses.py`: read-only inventory with review flags (tested on a synthetic tree; not yet run on the real drive).
+- [ ] Gemini: run `python tools/scan_licenses.py G:\DEVstuFF\NEW --out docs/reports/license_scan.md --csv docs/reports/license_scan.csv`, push both.
+- [ ] Owner: decide intent (share publicly / sell / internal only); that sets how strict the review must be.
+- [ ] Claude: draft updated rows for `docs/PROJECTS_LICENSE_REGISTER.csv` from the scan; owner confirms each model's license on its source page (the scanner cannot see licenses of models downloaded without a model card).
+- [ ] Add a `LICENSE` to every project the owner intends to share (currently several show NONE, e.g. "Add B2M PBR workflow and AO", "3D viewer").
+- Correction: "Add B2M PBR workflow and AO" is a desktop app (ModernGL/PySide6) that turns albedo projections into normal/roughness/metallic/height/AO maps, not a ComfyUI workflow. Integrate by file hand-off (ComfyUI writes albedo + manifest, the app reads them); needs its entry script and CLI options from Gemini.

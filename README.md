@@ -15,6 +15,7 @@ An isolated, reproducible ComfyUI workspace with beginner-friendly workflows, ho
 | `templates/`, `workflows/` | Workflow JSONs (API + UI canvas) and canvas previews |
 | `tools/inspect_workflows.py` | Read-only report: which lesson tracks match, and which node types lack curated tooltips, for any folder of workflow JSONs |
 | `tools/extract_track_facts.py` | Read-only: dumps a workflow's node chain, wiring, values and node-catalogue descriptions so a tour track can be written accurately |
+| `tools/scan_licenses.py` | Read-only license inventory for a folder of projects: license files, review flags (non-commercial, territory, copyleft), git remotes, dependencies, model-card licenses |
 | `dispatch_workflow.py` | Submits an API-format workflow to the running server |
 
 ## Workflows
