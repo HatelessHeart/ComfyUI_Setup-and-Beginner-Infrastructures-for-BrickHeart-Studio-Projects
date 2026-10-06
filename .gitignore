@@ -8,6 +8,7 @@
 /tmp/
 /input/
 /output/
+/experimental/
 __pycache__/
 *.pyc
 
