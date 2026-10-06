@@ -1,108 +1,22 @@
 import { app } from "../../scripts/app.js";
 
 /**
- * BrickHeart Guided Tour
+ * BrickHeart Guided Tour (data-driven)
  * Walks a learner through the loaded workflow one node at a time:
- * the camera glides to the real node, everything else dims, the key setting is
- * ringed in gold, and a card explains what it does, why, and what to try.
- * The highlight is computed from the live canvas every frame, so it follows
- * panning/zooming and works with any workflow that uses these node types.
+ * the camera glides to the real node, everything else dims, the key setting is ringed in gold,
+ * and a card explains what it does, why, and what to try.
  *
- * Teaching copy lives in STEPS below. Per-setting explanations are read from
- * widget.tooltip (set by tooltips.js) so there is one source of truth.
+ * Lessons live in tours/*.json ("tracks"), listed in tours/index.json. A track says which node
+ * types its steps look for; the tour picks the track that matches the workflow on the canvas
+ * (or lets the learner choose). Adding or correcting a lesson means editing JSON, not code.
+ * Steps whose node is not in the workflow are skipped. Nodes inside subgraphs (collapsed
+ * components) are found too; the tour opens the subgraph for that step and returns afterwards.
+ * Per-setting explanations are read from widget.tooltip (set by tooltips.js): one source of truth.
+ *
+ * Track format:  { id, title, summary, reviewed, steps: [ {
+ *   find: { type, nth?, titleIncludes?, titleExcludes? }  |  queue: true,
+ *   focus?: "widget" | ["alternate", ...], title, body, tryIt, source?: [..] } ] }
  */
-
-// find: { type, nth?, titleIncludes? }  -> picks a node in the loaded graph.
-// focus: widget name (or list of alternates, first present wins) to ring in gold. Steps whose node isn't in the graph are skipped.
-const STEPS = [
-    {
-        find: { type: "DiffusersLoader" },
-        title: "Pick the engine",
-        body: "Every image starts with a model. SDXL Turbo is a distilled model: it was trained to finish a picture in 1–4 steps instead of ~25, which is why this first draft takes seconds.",
-        tryIt: "Nothing to change here. Notice its three outputs (MODEL, CLIP, VAE): later nodes borrow each one.",
-    },
-    {
-        find: { type: "CLIPTextEncode", nth: 0 },
-        focus: "text",
-        title: "Say what you want",
-        body: "Words become numbers. CLIP reads your prompt and turns it into guidance the sampler can follow. The node below it is the negative prompt: things to steer away from.",
-        tryIt: "Rewrite the prompt (subject, lighting, camera, mood), then press Queue Prompt.",
-    },
-    {
-        find: { type: "EmptyLatentImage" },
-        focus: "width",
-        title: "Choose the canvas size",
-        body: "Generation starts from pure noise at a size you pick. 512×512 is Turbo's sweet spot. Bigger isn't better here: it's slower and often breaks the composition. We add resolution later with SUPIR instead.",
-        tryIt: "Leave it at 512×512 for now. Try 1024×1024 later and compare the result.",
-    },
-    {
-        find: { type: "KSampler", nth: 0 },
-        focus: "steps",
-        title: "The sampler: where the picture is made",
-        body: "The sampler removes noise a little at a time. A Turbo model needs only 1–4 steps and a cfg near 1.0. Pushing cfg up on Turbo burns the image: oversaturated and crunchy.",
-        tryIt: "Set steps to 8 and cfg to 7, Queue, and see it get worse. Then set 2 steps and cfg 1.0 again.",
-    },
-    {
-        find: { type: "VAEDecode", nth: 0 },
-        title: "Latent → pixels",
-        body: "The sampler works in a compressed 'latent' space, 1/8 the size of the real image. The VAE decoder expands it into pixels you can look at.",
-        tryIt: "Just follow the link coming in from the sampler's LATENT output.",
-    },
-    {
-        find: { type: "SaveImage", nth: 0 },
-        focus: "filename_prefix",
-        title: "Your first result",
-        body: "Previews and saves the image into the workspace output folder, with the whole workflow embedded in the file. You can drag any saved image back onto the canvas to restore its exact settings.",
-        tryIt: "Queue the workflow and watch the image appear here.",
-    },
-    {
-        find: { type: "LoadImage" },
-        title: "Hand-off to inpainting",
-        body: "Inpainting means redrawing only part of a picture. This node loads the image you want to fix, and it hosts the Mask Editor where you paint what to change.",
-        tryIt: "Right-click the image → Open in MaskEditor. Paint over the area to redo, then Save.",
-    },
-    {
-        find: { type: "VAEEncodeForInpaint" },
-        focus: "grow_mask_by",
-        title: "Mask → latent",
-        body: "Packs the image and your painted mask together for the sampler. White areas get redrawn; black areas stay locked. 'grow_mask_by' widens the mask a few pixels so the repaint blends into its surroundings without a visible seam.",
-        tryIt: "If you can see a hard edge around a repaint, raise grow_mask_by.",
-    },
-    {
-        find: { type: "KSampler", nth: 1 },
-        focus: "denoise",
-        title: "Inpaint sampler: how much to change",
-        body: "This sampler uses SDXL Base, a normal model, so it wants ~25 steps and cfg around 6. The key dial is denoise: 1.0 ignores what was there, lower values keep more of the original. This workflow uses 0.75.",
-        tryIt: "Lower denoise for a subtle fix, raise it for a bigger change, and re-queue.",
-    },
-    {
-        find: { type: "SUPIR_model_loader_v2" },
-        focus: "fp8_unet",
-        title: "Stage 2 setup: the restorer",
-        body: "SUPIR rebuilds fine detail when upscaling. It's heavy, so FP8 shrinks the model's memory footprint to fit a 12 GB card. It sits on the SDXL Base backbone, never on Turbo.",
-        tryIt: "Keep FP8 on unless you have more than 12 GB of VRAM.",
-    },
-    {
-        find: { type: "SUPIR_sample" },
-        focus: ["EDM_s_churn", "s_churn"],
-        title: "The SUPIR sampler: avoiding cracked skin",
-        body: "The classic SUPIR failure is a cracked, scaly texture ('craquelure'). It comes from s_churn (shown as EDM_s_churn on some versions) being above 0. Here it is 0 and s_noise is 1.0, with cfg around 3 and 25 steps.",
-        tryIt: "Set the highlighted churn value to 5, Queue, and look for the cracked texture. Then set it back to 0.",
-    },
-    {
-        find: { type: "SUPIR_decode" },
-        focus: "color_fix_type",
-        title: "Back to pixels, colors intact",
-        body: "Decodes the restored result in tiles so large images don't run out of VRAM. The Wavelet color fix keeps the colors matching your original instead of drifting.",
-        tryIt: "Compare this final output with the Stage 1 image side by side.",
-    },
-    {
-        queue: true,
-        title: "Run it",
-        body: "Queue Prompt sends the whole workflow to the GPU. Nodes light up green as they run, and results appear in the Save nodes.",
-        tryIt: "Press Ctrl+Enter, or the Queue button in the highlighted area.",
-    },
-];
 
 const GOLD = "#ffd700";
 const CYAN = "#00e5ff";
@@ -111,19 +25,47 @@ const SEEN_KEY = "brickheart.tour.seen";
 
 function safeStore(fn) { try { return fn(); } catch (_) { return null; } }
 
-function allNodes() {
-    return (app.graph && app.graph._nodes) ? app.graph._nodes : [];
-}
 function typeOf(n) { return n.comfyClass || n.type; }
 
-function resolveStep(step) {
-    if (step.queue) return { node: null };
-    const { type, nth = 0, titleIncludes } = step.find;
-    let list = allNodes().filter(n => typeOf(n) === type);
-    if (titleIncludes) list = list.filter(n => (n.title || "").toLowerCase().includes(titleIncludes.toLowerCase()));
-    // Order by workflow flow (left to right, then top to bottom) so "nth" is stable across layouts.
-    list.sort((a, b) => a.pos[0] - b.pos[0] || a.pos[1] - b.pos[1]);
-    return { node: list[nth] || null };
+// Every node in the open workflow, including nodes inside subgraphs (collapsed components).
+function collectNodes() {
+    const out = [], seen = new Set();
+    const walk = (graph, depth) => {
+        if (!graph || seen.has(graph) || depth > 4) return;
+        seen.add(graph);
+        for (const n of graph._nodes || graph.nodes || []) {
+            out.push({ node: n, graph, depth });
+            if (n.subgraph) walk(n.subgraph, depth + 1);
+        }
+    };
+    walk(app.graph, 0);
+    return out;
+}
+
+function resolveStep(step, all) {
+    if (step.queue) return { node: null, graph: null };
+    const { type, nth = 0, titleIncludes, titleExcludes } = step.find;
+    let list = all.filter(e => typeOf(e.node) === type);
+    const title = (e) => (e.node.title || "").toLowerCase();
+    if (titleIncludes) list = list.filter(e => title(e).includes(titleIncludes.toLowerCase()));
+    if (titleExcludes) list = list.filter(e => !title(e).includes(titleExcludes.toLowerCase()));
+    // Top-level first, then workflow flow (left to right, top to bottom) so "nth" is stable across layouts.
+    list.sort((a, b) => a.depth - b.depth || a.node.pos[0] - b.node.pos[0] || a.node.pos[1] - b.node.pos[1]);
+    const hit = list[nth];
+    return hit ? { node: hit.node, graph: hit.graph } : { node: null, graph: null };
+}
+
+async function loadTracks() {
+    const base = new URL("./tours/", import.meta.url);
+    const out = [];
+    try {
+        const idx = await (await fetch(new URL("index.json", base))).json();
+        for (const f of idx.tracks || []) {
+            try { out.push(await (await fetch(new URL(f, base))).json()); }
+            catch (e) { console.warn("[BrickHeart] could not load tour track", f, e); }
+        }
+    } catch (e) { console.warn("[BrickHeart] no tour tracks found", e); }
+    return out;
 }
 
 // ---- canvas <-> screen math (LiteGraph: screen = (pos + offset) * scale) ----
@@ -250,9 +192,13 @@ app.registerExtension({
         ].join(";");
         root.appendChild(pill);
 
-        let steps = [];     // resolved: [{step, node}]
+        let tracks = [];    // loaded from tours/*.json
+        let track = null;   // the track being run
+        let steps = [];     // resolved: [{step, node, graph}]
         let idx = 0;
         let active = false;
+        let chooserOpen = false;
+        let rootGraph = null; // graph open when the tour started, restored on exit
         let raf = 0;
 
         // The Spatial Pilot HUD floats above everything; hide it while the tour owns the screen.
@@ -261,14 +207,14 @@ app.registerExtension({
             if (hud) hud.style.display = show ? "block" : "none";
         }
 
-        function buildSteps() {
+        function resolveTrack(t, all) {
             const out = [];
-            for (const step of STEPS) {
-                const { node } = resolveStep(step);
-                if (step.queue || node) out.push({ step, node });
+            for (const step of t.steps || []) {
+                const r = resolveStep(step, all);
+                if (step.queue || r.node) out.push({ step, node: r.node, graph: r.graph });
             }
-            // The Queue step only makes sense if there's something to teach before it.
-            return out.length > 1 ? out : [];
+            const found = out.filter(x => !x.step.queue).length;
+            return { steps: out, found, total: (t.steps || []).filter(x => !x.queue).length };
         }
 
         function btn(label, primary, tip) {
@@ -302,7 +248,7 @@ app.registerExtension({
             h.textContent = step.title;
             const prog = document.createElement("div");
             prog.style.cssText = `font-size:12px;color:${CYAN};white-space:nowrap;`;
-            prog.textContent = `Step ${idx + 1} of ${total}`;
+            prog.textContent = `${track && track.title ? track.title + " · " : ""}Step ${idx + 1} of ${total}`;
             head.append(h, prog);
             card.appendChild(head);
 
@@ -325,10 +271,25 @@ app.registerExtension({
                 card.appendChild(n);
             }
 
+            if (node && step._inside) {
+                const w = document.createElement("div");
+                w.style.cssText = "margin-top:8px;font-size:12.5px;color:#ffcc80;";
+                w.textContent = "This node is inside a collapsed component (subgraph). If you can't see it, open the component to follow along.";
+                card.appendChild(w);
+            }
+
             const t = document.createElement("div");
             t.style.cssText = "margin-top:8px;font-size:13px;color:#a7ffeb;";
             t.textContent = "Try it: " + step.tryIt;
             card.appendChild(t);
+
+            if (track && (track.reviewed === false || step.verified === false)) {
+                const d = document.createElement("div");
+                d.style.cssText = "margin-top:6px;font-size:11px;color:#8aa3a8;font-style:italic;";
+                d.textContent = "Draft lesson: not yet reviewed by the instructor." + (step.source && step.source.length ? " Source: " + step.source.join("; ") : "");
+                d.title = "Lesson text lives in tours/" + track.id + ".json";
+                card.appendChild(d);
+            }
 
             const row = document.createElement("div");
             row.style.cssText = "display:flex;justify-content:space-between;align-items:center;margin-top:12px;gap:8px;";
@@ -352,12 +313,23 @@ app.registerExtension({
             next.focus({ preventScroll: true });
         }
 
+        function openGraphFor(entry) {
+            // Show the graph that contains the step's node (a subgraph or the root); report if we couldn't.
+            const c = app.canvas;
+            const want = entry.graph || rootGraph;
+            if (!want || !c) return true;
+            if (c.graph === want) return true;
+            try { if (typeof c.setGraph === "function") c.setGraph(want); } catch (e) { console.warn("[BrickHeart] setGraph failed", e); }
+            return c.graph === want;
+        }
+
         function go(i) {
             if (i < 0 || i >= steps.length) return;
             idx = i;
             if (camAnim) camAnim.cancelled = true;
-            const { node } = steps[idx];
-            if (node) glideTo(node);
+            const entry = steps[idx];
+            entry.step._inside = !openGraphFor(entry);
+            if (entry.node && !entry.step._inside) glideTo(entry.node);
             renderCard();
         }
 
@@ -386,7 +358,7 @@ app.registerExtension({
             const { step, node } = steps[idx];
             let rect = null, wrect = null;
             if (step.queue) rect = queueButtonRect();
-            else if (node) { rect = nodeRect(node); wrect = step.focus ? widgetRect(node, step.focus) : null; }
+            else if (node && !step._inside) { rect = nodeRect(node); wrect = step.focus ? widgetRect(node, step.focus) : null; }
 
             const pad = 8;
             ctx.fillStyle = "rgba(4, 10, 18, 0.62)";
@@ -416,6 +388,7 @@ app.registerExtension({
         }
 
         function onKey(e) {
+            if (chooserOpen && e.key === "Escape") { e.preventDefault(); closeChooser(); return; }
             if (!active) return;
             const tag = e.target && e.target.tagName;
             if (tag === "INPUT" || tag === "TEXTAREA" || (e.target && e.target.isContentEditable)) return;
@@ -424,13 +397,23 @@ app.registerExtension({
             else if (e.key === "Escape") { e.preventDefault(); stop(); }
         }
 
-        function start() {
-            steps = buildSteps();
-            if (!steps.length) {
-                pill.textContent = "No tour for this workflow yet. Load one from templates/";
-                setTimeout(() => { pill.textContent = "🎓 Learn this workflow"; }, 3500);
-                return;
-            }
+        function closeChooser() {
+            chooserOpen = false;
+            card.style.display = "none";
+            pill.style.display = "block";
+            setHud(true);
+        }
+
+        function flash(msg) {
+            pill.textContent = msg;
+            setTimeout(() => { pill.textContent = "🎓 Learn this workflow"; }, 4500);
+        }
+
+        function begin(t, resolved) {
+            track = t;
+            steps = resolved.steps;
+            chooserOpen = false;
+            rootGraph = app.canvas && app.canvas.graph ? app.canvas.graph : app.graph;
             safeStore(() => localStorage.setItem(SEEN_KEY, "1"));
             pill.style.animation = "";
             active = true;
@@ -443,6 +426,66 @@ app.registerExtension({
             raf = requestAnimationFrame(drawFrame);
         }
 
+        function showChooser(viable) {
+            chooserOpen = true;
+            pill.style.display = "none";
+            setHud(false);
+            card.innerHTML = "";
+            card.style.display = "block";
+            const h = document.createElement("div");
+            h.style.cssText = "font-size:16px;font-weight:700;color:#fff;margin-bottom:4px;";
+            h.textContent = "Pick a lesson";
+            const sub = document.createElement("div");
+            sub.style.cssText = "font-size:12.5px;color:#80deea;margin-bottom:10px;";
+            sub.textContent = "These lessons match nodes in the workflow on your canvas.";
+            card.append(h, sub);
+            viable.forEach((v, i) => {
+                const b = document.createElement("button");
+                b.style.cssText = "display:block;width:100%;text-align:left;margin:4px 0;padding:9px 12px;border-radius:8px;cursor:pointer;font:inherit;color:#e0f7fa;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.35);";
+                b.title = v.track.summary || v.track.title;
+                const t = document.createElement("div");
+                t.style.cssText = "font-weight:700;color:#fff;";
+                t.textContent = (i === 0 ? "★ " : "") + v.track.title;
+                const m = document.createElement("div");
+                m.style.cssText = "font-size:12px;color:#80deea;";
+                m.textContent = `${v.resolved.found} of ${v.resolved.total} steps match` + (i === 0 ? " · best match" : "");
+                b.append(t, m);
+                if (v.track.summary) {
+                    const sm = document.createElement("div");
+                    sm.style.cssText = "font-size:12px;color:#6fa8b0;";
+                    sm.textContent = v.track.summary;
+                    b.appendChild(sm);
+                }
+                b.onclick = () => begin(v.track, v.resolved);
+                card.appendChild(b);
+            });
+            const x = document.createElement("button");
+            x.textContent = "Cancel";
+            x.title = "Close (Esc)";
+            x.style.cssText = `margin-top:8px;padding:6px 14px;border-radius:6px;cursor:pointer;background:transparent;color:#80deea;border:1px solid ${CYAN};font:600 13px system-ui;`;
+            x.onclick = closeChooser;
+            card.appendChild(x);
+        }
+
+        async function start() {
+            if (!tracks.length) tracks = await loadTracks();
+            const all = collectNodes();
+            const viable = tracks
+                .map(t => ({ track: t, resolved: resolveTrack(t, all) }))
+                .filter(v => v.resolved.found >= 2)
+                .sort((a, b) => (b.resolved.found / b.resolved.total) - (a.resolved.found / a.resolved.total) || b.resolved.found - a.resolved.found);
+            // Offer only real matches: at least 3 steps and a third of the track. Always keep the best one.
+            const strong = viable.filter(v => v.resolved.found >= 3 && v.resolved.found / v.resolved.total >= 0.34);
+            if (viable.length && !strong.length) strong.push(viable[0]);
+            viable.length = 0; viable.push(...strong);
+            if (!viable.length) {
+                flash(tracks.length ? "No lesson matches this workflow yet. See docs/ROADMAP_AND_IDEAS.md" : "No lessons found (tours/index.json)");
+                return;
+            }
+            if (viable.length === 1) begin(viable[0].track, viable[0].resolved);
+            else showChooser(viable);
+        }
+
         function stop() {
             active = false;
             if (camAnim) camAnim.cancelled = true;
@@ -451,11 +494,16 @@ app.registerExtension({
             card.style.display = "none";
             pill.style.display = "block";
             setHud(true);
+            try {   // leave the learner where they started if the tour opened a subgraph
+                const c = app.canvas;
+                if (rootGraph && c && c.graph !== rootGraph && typeof c.setGraph === "function") c.setGraph(rootGraph);
+            } catch (_) { /* best effort */ }
         }
 
         pill.onclick = start;
         window.addEventListener("keydown", onKey, true);
-        window.BrickHeartTour = { start, stop, isActive: () => active, steps: () => STEPS.length };
+        window.BrickHeartTour = { start, stop, isActive: () => active, tracks: () => tracks.map(t => t.id) };
+        loadTracks().then(t => { tracks = t; });
 
         // First visit: gently draw attention to the pill once. Never auto-starts or blocks the canvas.
         if (!safeStore(() => localStorage.getItem(SEEN_KEY))) {

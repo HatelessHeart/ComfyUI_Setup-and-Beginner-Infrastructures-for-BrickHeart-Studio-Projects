@@ -1,0 +1,168 @@
+{
+  "id": "qwen_edit_inpaint",
+  "title": "Qwen Image Edit: masked inpainting",
+  "summary": "Edit part of an image with Qwen Image Edit: paint a mask, soften its edge, repaint only that region.",
+  "reviewed": false,
+  "steps": [
+    {
+      "find": {
+        "type": "LoadImage"
+      },
+      "title": "The image to edit",
+      "body": "Loads the picture you want to change. This one was painted with a mask in ComfyUI's mask editor (right-click the image, Open in MaskEditor).",
+      "tryIt": "Load your own image.",
+      "focus": "image",
+      "source": [
+        "docs/reports/track_facts.md: Qwen Image Edit Inpainting.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "LoadImageMask"
+      },
+      "title": "The mask",
+      "body": "A second image whose red channel is used as the mask: white means repaint, black means keep. Here the mask comes from a separate file.",
+      "tryIt": "Swap in a different mask image.",
+      "focus": "channel",
+      "source": [
+        "docs/reports/track_facts.md: Qwen Image Edit Inpainting.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "GrowMaskWithBlur"
+      },
+      "title": "Soften the mask edge",
+      "body": "A hard-edged mask leaves a visible seam. The blur radius (31.3 here) feathers the edge so the repaint blends into its surroundings.",
+      "tryIt": "Lower blur_radius to 0 and look for a seam.",
+      "focus": "blur_radius",
+      "source": [
+        "docs/reports/track_facts.md: Qwen Image Edit Inpainting.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "ResizeMask"
+      },
+      "title": "Match mask to image",
+      "body": "The mask is resized to the same size as the image so each mask pixel lines up with an image pixel.",
+      "tryIt": "Nothing to change.",
+      "source": [
+        "docs/reports/track_facts.md: Qwen Image Edit Inpainting.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "VAEEncode",
+        "nth": 0
+      },
+      "title": "Image to latent",
+      "body": "Compresses the image into the latent space the model works in.",
+      "tryIt": "Nothing to change.",
+      "source": [
+        "docs/reports/track_facts.md: Qwen Image Edit Inpainting.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "SetLatentNoiseMask"
+      },
+      "title": "Apply the mask",
+      "body": "Attaches the mask to the latent so the sampler only changes the masked region.",
+      "tryIt": "Follow the two incoming wires: the latent and the mask.",
+      "source": [
+        "docs/reports/track_facts.md: Qwen Image Edit Inpainting.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "UnetLoaderGGUF"
+      },
+      "title": "The edit model",
+      "body": "qwen-image-edit-2511 as a Q4_K_M GGUF: a quantized version that needs less VRAM.",
+      "tryIt": "Leave it.",
+      "focus": "unet_name",
+      "source": [
+        "docs/reports/track_facts.md: Qwen Image Edit Inpainting.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "LoraLoaderModelOnly"
+      },
+      "title": "Lightning LoRA for edits",
+      "body": "The Lightning-4steps LoRA for the edit model lets this workflow finish in 4 steps.",
+      "tryIt": "Bypass it to see the difference.",
+      "focus": "strength_model",
+      "source": [
+        "docs/reports/track_facts.md: Qwen Image Edit Inpainting.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "ModelSamplingAuraFlow"
+      },
+      "title": "Sampling shift",
+      "body": "A setting for this model family that changes how the sampling schedule is spread. This workflow uses 3.1.",
+      "tryIt": "Leave it unless you are tuning.",
+      "focus": "shift",
+      "source": [
+        "docs/reports/track_facts.md: Qwen Image Edit Inpainting.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "TextEncodeQwenImageEditPlus",
+        "titleIncludes": "Positive"
+      },
+      "title": "Tell it what to change",
+      "body": "The edit instruction goes here (this workflow has 'Make a gold face'). The node also looks at the image and the VAE so the model sees what it is editing.",
+      "tryIt": "Write your own instruction, Queue, and compare.",
+      "focus": "prompt",
+      "source": [
+        "docs/reports/track_facts.md: Qwen Image Edit Inpainting.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "KSampler"
+      },
+      "title": "The sampler",
+      "body": "4 steps, cfg 1, euler, simple. These match the Lightning LoRA.",
+      "tryIt": "Change the seed to get another variation.",
+      "focus": "steps",
+      "source": [
+        "docs/reports/track_facts.md: Qwen Image Edit Inpainting.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "Image Comparer (rgthree)"
+      },
+      "title": "Before and after",
+      "body": "A slider that overlays the original and the edited result so you can see exactly what changed.",
+      "tryIt": "Drag across the image.",
+      "source": [
+        "docs/reports/track_facts.md: Qwen Image Edit Inpainting.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "SaveImage"
+      },
+      "title": "Your result",
+      "body": "Saves the edited image.",
+      "tryIt": "Queue and check the mask edges.",
+      "focus": "filename_prefix",
+      "source": [
+        "docs/reports/track_facts.md: Qwen Image Edit Inpainting.json"
+      ]
+    },
+    {
+      "queue": true,
+      "title": "Run it",
+      "body": "Queue Prompt sends the whole workflow to the GPU. Nodes light up as they run, and results appear in the Save node.",
+      "tryIt": "Press Ctrl+Enter, or the Queue button in the highlighted area."
+    }
+  ]
+}

@@ -1,0 +1,174 @@
+{
+  "id": "mesh_projection_albedo",
+  "title": "Mesh projection: paint one view, then convert to albedo",
+  "summary": "Qwen Image Edit paints a view of your mesh from a reference, then a Flux2 pass with an albedo LoRA converts it to flat base color.",
+  "reviewed": false,
+  "steps": [
+    {
+      "find": {
+        "type": "LoadImage",
+        "titleIncludes": "Position"
+      },
+      "title": "The position image",
+      "body": "A render of your mesh from one camera angle. It tells the model where things are in this view.",
+      "tryIt": "Load a render from your mesh.",
+      "focus": "image",
+      "source": [
+        "docs/reports/track_facts.md: Qwen Edit Mesh Projection - Albedo.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "Canny"
+      },
+      "title": "Turn it into edges",
+      "body": "Extracts the outlines of the position image (thresholds 0.05 and 0.25). Edges are a clean way to tell the model the shape without its lighting or color.",
+      "tryIt": "Raise low_threshold to keep fewer, stronger edges.",
+      "focus": "low_threshold",
+      "source": [
+        "docs/reports/track_facts.md: Qwen Edit Mesh Projection - Albedo.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "LoadImage",
+        "titleIncludes": "Reference"
+      },
+      "title": "The reference image",
+      "body": "The look you want painted onto the model: colors, materials, style.",
+      "tryIt": "Load a reference.",
+      "focus": "image",
+      "source": [
+        "docs/reports/track_facts.md: Qwen Edit Mesh Projection - Albedo.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "ImageCompositeMasked"
+      },
+      "title": "Flatten the reference",
+      "body": "The reference is composited onto a plain solid background using its own mask, so only the object's pixels guide the result. This is my reading of the wiring; confirm it against how you built it.",
+      "tryIt": "Follow the wires: reference, inverted mask, solid image.",
+      "source": [
+        "docs/reports/track_facts.md: Qwen Edit Mesh Projection - Albedo.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "ReferenceLatent",
+        "nth": 0
+      },
+      "title": "Feed both images to the model",
+      "body": "Reference latents attach a picture to the prompt conditioning. The chain here adds the flattened reference first and the Canny edges second, for both the positive and the negative branch.",
+      "tryIt": "Follow the chain of ReferenceLatent nodes from the prompt to the sampler.",
+      "source": [
+        "docs/reports/track_facts.md: Qwen Edit Mesh Projection - Albedo.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "TextEncodeQwenImageEditPlus",
+        "titleIncludes": "Positive"
+      },
+      "title": "The instruction",
+      "body": "The text prompt for the edit model, which also receives the VAE. It is empty in this workflow, so the images do the steering.",
+      "tryIt": "Add a short instruction to nudge the result.",
+      "focus": "prompt",
+      "source": [
+        "docs/reports/track_facts.md: Qwen Edit Mesh Projection - Albedo.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "UnetLoaderGGUF",
+        "nth": 0
+      },
+      "title": "The painting model",
+      "body": "qwen-image-edit-2511 as a Q4_K_M GGUF (the first loader).",
+      "tryIt": "Leave it.",
+      "focus": "unet_name",
+      "source": [
+        "docs/reports/track_facts.md: Qwen Edit Mesh Projection - Albedo.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "KSampler"
+      },
+      "title": "The sampler",
+      "body": "4 steps, cfg 1, euler, simple, with the Lightning LoRA. The seed is fixed at 1000.",
+      "tryIt": "Change the seed for a variation of the paint.",
+      "focus": "seed",
+      "source": [
+        "docs/reports/track_facts.md: Qwen Edit Mesh Projection - Albedo.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "VAEDecodeTiled"
+      },
+      "title": "Decode in tiles",
+      "body": "Decodes the painted view in tiles (128 with 64 overlap) so large views don't run out of memory.",
+      "tryIt": "Leave it.",
+      "focus": "tile_size",
+      "source": [
+        "docs/reports/track_facts.md: Qwen Edit Mesh Projection - Albedo.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "LoraLoaderModelOnly",
+        "nth": 1
+      },
+      "title": "Stage 2: the albedo LoRA",
+      "body": "Inside the collapsed Flux2 component, a LoRA named PBRFusion4_Albedo is applied. By its name it is meant to produce albedo: base color without baked-in lighting and shadows. That matters because lighting painted into a texture looks wrong once the mesh is lit differently.",
+      "tryIt": "Compare the image coming out of the Qwen stage with the one going into the background removal.",
+      "focus": "lora_name",
+      "source": [
+        "docs/reports/track_facts.md: Qwen Edit Mesh Projection - Albedo.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "Flux2Scheduler"
+      },
+      "title": "Stage 2: refine with Flux2",
+      "body": "The Qwen result is re-encoded and used as a reference for a Flux2 Klein 4B pass: 4 steps at 1024 by 1024.",
+      "tryIt": "Compare the image before and after this stage.",
+      "focus": "steps",
+      "source": [
+        "docs/reports/track_facts.md: Qwen Edit Mesh Projection - Albedo.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "RMBG"
+      },
+      "title": "Cut out the object",
+      "body": "Removes the background (RMBG-2.0) and outputs transparency, leaving just the object.",
+      "tryIt": "Change the background setting.",
+      "focus": "background",
+      "source": [
+        "docs/reports/track_facts.md: Qwen Edit Mesh Projection - Albedo.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "SaveImage"
+      },
+      "title": "Your painted view",
+      "body": "The result for this camera angle. Repeat with other views, then project them onto the shared UV texture.",
+      "tryIt": "Queue, then try another position image.",
+      "focus": "filename_prefix",
+      "source": [
+        "docs/reports/track_facts.md: Qwen Edit Mesh Projection - Albedo.json"
+      ]
+    },
+    {
+      "queue": true,
+      "title": "Run it",
+      "body": "Queue Prompt sends the whole workflow to the GPU. Nodes light up as they run, and results appear in the Save node.",
+      "tryIt": "Press Ctrl+Enter, or the Queue button in the highlighted area."
+    }
+  ]
+}

@@ -1,0 +1,166 @@
+{
+  "id": "starter_sdxl_supir",
+  "title": "2D starter: SDXL Turbo → inpaint → SUPIR",
+  "summary": "The three BrickHeart starter templates: fast draft, targeted repaint, high-quality restore.",
+  "reviewed": false,
+  "steps": [
+    {
+      "find": {
+        "type": "DiffusersLoader"
+      },
+      "title": "Pick the engine",
+      "body": "Every image starts with a model. SDXL Turbo is a distilled model: it was trained to finish a picture in 1–4 steps instead of ~25, which is why this first draft takes seconds.",
+      "tryIt": "Nothing to change here. Notice its three outputs (MODEL, CLIP, VAE): later nodes borrow each one.",
+      "source": [
+        "written by Claude from general knowledge; values cross-checked against templates/03 and README lessons"
+      ]
+    },
+    {
+      "find": {
+        "type": "CLIPTextEncode",
+        "nth": 0
+      },
+      "focus": "text",
+      "title": "Say what you want",
+      "body": "Words become numbers. CLIP reads your prompt and turns it into guidance the sampler can follow. The node below it is the negative prompt: things to steer away from.",
+      "tryIt": "Rewrite the prompt (subject, lighting, camera, mood), then press Queue Prompt.",
+      "source": [
+        "written by Claude from general knowledge; values cross-checked against templates/03 and README lessons"
+      ]
+    },
+    {
+      "find": {
+        "type": "EmptyLatentImage"
+      },
+      "focus": "width",
+      "title": "Choose the canvas size",
+      "body": "Generation starts from pure noise at a size you pick. 512×512 is Turbo's sweet spot. Bigger isn't better here: it's slower and often breaks the composition. We add resolution later with SUPIR instead.",
+      "tryIt": "Leave it at 512×512 for now. Try 1024×1024 later and compare the result.",
+      "source": [
+        "written by Claude from general knowledge; values cross-checked against templates/03 and README lessons"
+      ]
+    },
+    {
+      "find": {
+        "type": "KSampler",
+        "nth": 0
+      },
+      "focus": "steps",
+      "title": "The sampler: where the picture is made",
+      "body": "The sampler removes noise a little at a time. A Turbo model needs only 1–4 steps and a cfg near 1.0. Pushing cfg up on Turbo burns the image: oversaturated and crunchy.",
+      "tryIt": "Set steps to 8 and cfg to 7, Queue, and see it get worse. Then set 2 steps and cfg 1.0 again.",
+      "source": [
+        "written by Claude from general knowledge; values cross-checked against templates/03 and README lessons"
+      ]
+    },
+    {
+      "find": {
+        "type": "VAEDecode",
+        "nth": 0
+      },
+      "title": "Latent → pixels",
+      "body": "The sampler works in a compressed 'latent' space, 1/8 the size of the real image. The VAE decoder expands it into pixels you can look at.",
+      "tryIt": "Just follow the link coming in from the sampler's LATENT output.",
+      "source": [
+        "written by Claude from general knowledge; values cross-checked against templates/03 and README lessons"
+      ]
+    },
+    {
+      "find": {
+        "type": "SaveImage",
+        "nth": 0
+      },
+      "focus": "filename_prefix",
+      "title": "Your first result",
+      "body": "Previews and saves the image into the workspace output folder, with the whole workflow embedded in the file. You can drag any saved image back onto the canvas to restore its exact settings.",
+      "tryIt": "Queue the workflow and watch the image appear here.",
+      "source": [
+        "written by Claude from general knowledge; values cross-checked against templates/03 and README lessons"
+      ]
+    },
+    {
+      "find": {
+        "type": "LoadImage"
+      },
+      "title": "Hand-off to inpainting",
+      "body": "Inpainting means redrawing only part of a picture. This node loads the image you want to fix, and it hosts the Mask Editor where you paint what to change.",
+      "tryIt": "Right-click the image → Open in MaskEditor. Paint over the area to redo, then Save.",
+      "source": [
+        "written by Claude from general knowledge; values cross-checked against templates/03 and README lessons"
+      ]
+    },
+    {
+      "find": {
+        "type": "VAEEncodeForInpaint"
+      },
+      "focus": "grow_mask_by",
+      "title": "Mask → latent",
+      "body": "Packs the image and your painted mask together for the sampler. White areas get redrawn; black areas stay locked. 'grow_mask_by' widens the mask a few pixels so the repaint blends into its surroundings without a visible seam.",
+      "tryIt": "If you can see a hard edge around a repaint, raise grow_mask_by.",
+      "source": [
+        "written by Claude from general knowledge; values cross-checked against templates/03 and README lessons"
+      ]
+    },
+    {
+      "find": {
+        "type": "KSampler",
+        "nth": 1
+      },
+      "focus": "denoise",
+      "title": "Inpaint sampler: how much to change",
+      "body": "This sampler uses SDXL Base, a normal model, so it wants ~25 steps and cfg around 6. The key dial is denoise: 1.0 ignores what was there, lower values keep more of the original. This workflow uses 0.75.",
+      "tryIt": "Lower denoise for a subtle fix, raise it for a bigger change, and re-queue.",
+      "source": [
+        "written by Claude from general knowledge; values cross-checked against templates/03 and README lessons"
+      ]
+    },
+    {
+      "find": {
+        "type": "SUPIR_model_loader_v2"
+      },
+      "focus": "fp8_unet",
+      "title": "Stage 2 setup: the restorer",
+      "body": "SUPIR rebuilds fine detail when upscaling. It's heavy, so FP8 shrinks the model's memory footprint to fit a 12 GB card. It sits on the SDXL Base backbone, never on Turbo.",
+      "tryIt": "Keep FP8 on unless you have more than 12 GB of VRAM.",
+      "source": [
+        "written by Claude from general knowledge; values cross-checked against templates/03 and README lessons"
+      ]
+    },
+    {
+      "find": {
+        "type": "SUPIR_sample"
+      },
+      "focus": [
+        "EDM_s_churn",
+        "s_churn"
+      ],
+      "title": "The SUPIR sampler: avoiding cracked skin",
+      "body": "The classic SUPIR failure is a cracked, scaly texture ('craquelure'). It comes from s_churn (shown as EDM_s_churn on some versions) being above 0. Here it is 0 and s_noise is 1.0, with cfg around 3 and 25 steps.",
+      "tryIt": "Set the highlighted churn value to 5, Queue, and look for the cracked texture. Then set it back to 0.",
+      "source": [
+        "written by Claude from general knowledge; values cross-checked against templates/03 and README lessons"
+      ]
+    },
+    {
+      "find": {
+        "type": "SUPIR_decode"
+      },
+      "focus": "color_fix_type",
+      "title": "Back to pixels, colors intact",
+      "body": "Decodes the restored result in tiles so large images don't run out of VRAM. The Wavelet color fix keeps the colors matching your original instead of drifting.",
+      "tryIt": "Compare this final output with the Stage 1 image side by side.",
+      "source": [
+        "written by Claude from general knowledge; values cross-checked against templates/03 and README lessons"
+      ]
+    },
+    {
+      "queue": true,
+      "title": "Run it",
+      "body": "Queue Prompt sends the whole workflow to the GPU. Nodes light up green as they run, and results appear in the Save nodes.",
+      "tryIt": "Press Ctrl+Enter, or the Queue button in the highlighted area.",
+      "source": [
+        "written by Claude from general knowledge; values cross-checked against templates/03 and README lessons"
+      ]
+    }
+  ]
+}

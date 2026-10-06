@@ -1,0 +1,10 @@
+{
+  "tracks": [
+    "starter_sdxl_supir.json",
+    "flux2_generation.json",
+    "qwen_generation.json",
+    "qwen_edit_inpaint.json",
+    "trellis2_textured_mesh.json",
+    "mesh_projection_albedo.json"
+  ]
+}

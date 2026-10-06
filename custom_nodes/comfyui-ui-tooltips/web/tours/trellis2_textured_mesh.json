@@ -1,0 +1,169 @@
+{
+  "id": "trellis2_textured_mesh",
+  "title": "TRELLIS.2: image to textured 3D mesh",
+  "summary": "One image in, a textured .glb mesh out: generation passes, mesh cleanup, UV unwrap and export.",
+  "reviewed": false,
+  "steps": [
+    {
+      "find": {
+        "type": "Trellis2LoadImageWithTransparency"
+      },
+      "title": "The source image",
+      "body": "The picture of the object to turn into 3D. A clean cut-out on a transparent or plain background gives the model the clearest signal.",
+      "tryIt": "Load an image of a single object.",
+      "focus": "image",
+      "source": [
+        "docs/reports/track_facts.md: Gen Textured Mesh with Trellis2.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "Trellis2PreProcessImage"
+      },
+      "title": "Prepare the image",
+      "body": "Pads and resizes the image (padding 10, max size 1024). Background removal is switched off here, so the image should already be cut out.",
+      "tryIt": "Turn on remove_background if your image still has a background.",
+      "focus": "remove_background",
+      "source": [
+        "docs/reports/track_facts.md: Gen Textured Mesh with Trellis2.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "Trellis2LoadModel"
+      },
+      "title": "Load the 3D model",
+      "body": "Loads TRELLIS.2 4B. low_vram is on, which trades speed for fitting into smaller GPUs, and keep_models_loaded is off so memory is freed between stages.",
+      "tryIt": "Leave low_vram on for a 12 GB card.",
+      "focus": "low_vram",
+      "source": [
+        "docs/reports/track_facts.md: Gen Textured Mesh with Trellis2.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "Trellis2ImageCondGenerator"
+      },
+      "title": "Read the image",
+      "body": "Extracts features from the image that the next stages use as guidance.",
+      "tryIt": "Nothing to change.",
+      "source": [
+        "docs/reports/track_facts.md: Gen Textured Mesh with Trellis2.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "Trellis2SparseGenerator"
+      },
+      "title": "Pass 1: rough structure",
+      "body": "Roughly decides where the object occupies space. 50 steps, guidance 7.5, heun sampler. The seed here changes the shape.",
+      "tryIt": "Change the seed to get a different shape.",
+      "focus": "seed",
+      "source": [
+        "docs/reports/track_facts.md: Gen Textured Mesh with Trellis2.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "Trellis2ShapeGenerator"
+      },
+      "title": "Pass 2: shape",
+      "body": "Refines that structure into detailed geometry at 1024 resolution, 25 steps.",
+      "tryIt": "Lower shape_steps to trade detail for speed.",
+      "focus": "shape_steps",
+      "source": [
+        "docs/reports/track_facts.md: Gen Textured Mesh with Trellis2.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "Trellis2TexSlatGenerator"
+      },
+      "title": "Pass 3: texture",
+      "body": "Generates the surface appearance for that shape: 25 steps.",
+      "tryIt": "Compare texture_steps 15 and 25.",
+      "focus": "texture_steps",
+      "source": [
+        "docs/reports/track_facts.md: Gen Textured Mesh with Trellis2.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "Trellis2DecodeLatents"
+      },
+      "title": "Decode to a mesh",
+      "body": "Turns the generated latent data into an actual mesh with texture data. The tiled decoder lowers peak memory.",
+      "tryIt": "Leave tiled on.",
+      "focus": "use_tiled_decoder",
+      "source": [
+        "docs/reports/track_facts.md: Gen Textured Mesh with Trellis2.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "Trellis2ReconstructMeshWithQuad"
+      },
+      "title": "Clean the geometry",
+      "body": "Rebuilds the mesh with quad faces and removes floaters (stray bits) and inner faces.",
+      "tryIt": "Turn remove_floaters off to see what it was removing.",
+      "focus": "remove_floaters",
+      "source": [
+        "docs/reports/track_facts.md: Gen Textured Mesh with Trellis2.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "Trellis2SimplifyMesh",
+        "nth": 0
+      },
+      "title": "Reduce the polygon count",
+      "body": "Simplifies the mesh toward the Target Face Number (1,000,000 here) using the Cumesh method.",
+      "tryIt": "Lower the target and compare the mesh in the preview.",
+      "focus": "method",
+      "source": [
+        "docs/reports/track_facts.md: Gen Textured Mesh with Trellis2.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "Trellis2UnWrapAndRasterizer"
+      },
+      "title": "Unwrap and bake the texture",
+      "body": "Flattens the 3D surface into a 2D UV layout and bakes the texture onto it at 2048 by 2048. Gaps are filled by inpainting with the telea method.",
+      "tryIt": "Try texture_size 4096.",
+      "focus": "texture_size",
+      "source": [
+        "docs/reports/track_facts.md: Gen Textured Mesh with Trellis2.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "Trellis2ExportMesh"
+      },
+      "title": "Export",
+      "body": "Writes the finished mesh to disk as a .glb file, ready for Blender or a game engine.",
+      "tryIt": "Change file_format and re-export.",
+      "focus": "file_format",
+      "source": [
+        "docs/reports/track_facts.md: Gen Textured Mesh with Trellis2.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "Preview3D"
+      },
+      "title": "Look at it in 3D",
+      "body": "Previews the exported mesh right here so you can orbit around it.",
+      "tryIt": "Drag to rotate.",
+      "source": [
+        "docs/reports/track_facts.md: Gen Textured Mesh with Trellis2.json"
+      ]
+    },
+    {
+      "queue": true,
+      "title": "Run it",
+      "body": "Queue Prompt sends the whole workflow to the GPU. Nodes light up as they run, and results appear in the Save node.",
+      "tryIt": "Press Ctrl+Enter, or the Queue button in the highlighted area."
+    }
+  ]
+}

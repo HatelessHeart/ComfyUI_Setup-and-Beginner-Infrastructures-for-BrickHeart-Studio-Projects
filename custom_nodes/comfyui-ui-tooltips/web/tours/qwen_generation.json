@@ -1,0 +1,160 @@
+{
+  "id": "qwen_generation",
+  "title": "Qwen Image: text to image (4-step Lightning)",
+  "summary": "GGUF-quantized Qwen Image with a Lightning LoRA for fast 4-step results and an optional prompt enhancer.",
+  "reviewed": false,
+  "steps": [
+    {
+      "find": {
+        "type": "UnetLoaderGGUF"
+      },
+      "title": "A quantized model (GGUF)",
+      "body": "This loads qwen-image-2512 as a GGUF file at Q6_K. GGUF files are compressed ('quantized') versions of a model: smaller in VRAM, with a small quality trade-off that depends on the quantization level.",
+      "tryIt": "Don't change it yet. Larger Q numbers are closer to the original but need more memory.",
+      "focus": "unet_name",
+      "source": [
+        "docs/reports/track_facts.md: Gen Image with Qwen and Prompt Enhancer.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "LoraLoaderModelOnly"
+      },
+      "title": "The Lightning LoRA",
+      "body": "A LoRA is a small add-on that changes a model's behavior. The file here is named Lightning-4steps: it is what lets this workflow produce a good image in 4 steps instead of the usual dozens. Strength 1 applies it fully.",
+      "tryIt": "Bypass this node and Queue to see how many steps you would otherwise need.",
+      "focus": "strength_model",
+      "source": [
+        "docs/reports/track_facts.md: Gen Image with Qwen and Prompt Enhancer.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "CLIPLoader"
+      },
+      "title": "The text encoder",
+      "body": "Qwen 2.5 VL (7B, FP8) reads your prompt. The 'type' is qwen_image so ComfyUI wires it correctly for this model family.",
+      "tryIt": "Leave it.",
+      "focus": "type",
+      "source": [
+        "docs/reports/track_facts.md: Gen Image with Qwen and Prompt Enhancer.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "VAELoader"
+      },
+      "title": "The VAE",
+      "body": "qwen_image_vae turns the finished latent into pixels. Use the VAE that matches the model.",
+      "tryIt": "Leave it.",
+      "focus": "vae_name",
+      "source": [
+        "docs/reports/track_facts.md: Gen Image with Qwen and Prompt Enhancer.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "PrimitiveStringMultiline",
+        "titleIncludes": "String"
+      },
+      "title": "Your idea",
+      "body": "The short prompt you write. When the enhancer is on, it is rewritten before reaching the model.",
+      "tryIt": "Edit it and Queue.",
+      "focus": "value",
+      "source": [
+        "docs/reports/track_facts.md: Gen Image with Qwen and Prompt Enhancer.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "AILab_QwenVL_PromptEnhancer"
+      },
+      "title": "The prompt rewriter",
+      "body": "Qwen3-VL-4B-Instruct expands your short prompt in the Refine style.",
+      "tryIt": "Change enhancement_style and compare.",
+      "focus": "enhancement_style",
+      "source": [
+        "docs/reports/track_facts.md: Gen Image with Qwen and Prompt Enhancer.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "PrimitiveBoolean",
+        "titleIncludes": "Enhance"
+      },
+      "title": "Enhancer on/off",
+      "body": "True sends the rewritten prompt on; false sends your text untouched.",
+      "tryIt": "Toggle it and compare two runs.",
+      "focus": "value",
+      "source": [
+        "docs/reports/track_facts.md: Gen Image with Qwen and Prompt Enhancer.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "CLIPTextEncode",
+        "titleIncludes": "Negative"
+      },
+      "title": "Negative prompt",
+      "body": "Describes what to steer away from. In this workflow it is a Chinese list that roughly means: low resolution, low quality, deformed limbs, deformed fingers, oversaturated, waxy look, faces with no detail, over-smooth, an AI look, chaotic composition, blurred or distorted text. Qwen models understand Chinese, so a Chinese list works.",
+      "tryIt": "Edit it and see what changes.",
+      "focus": "text",
+      "source": [
+        "docs/reports/track_facts.md: Gen Image with Qwen and Prompt Enhancer.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "EmptySD3LatentImage"
+      },
+      "title": "The canvas",
+      "body": "A blank latent at 1024 by 1024. Generation starts from noise at this size.",
+      "tryIt": "Try 768 by 768 for speed.",
+      "focus": "width",
+      "source": [
+        "docs/reports/track_facts.md: Gen Image with Qwen and Prompt Enhancer.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "KSampler"
+      },
+      "title": "The sampler",
+      "body": "4 steps, cfg 1, euler, simple scheduler, denoise 1. These low numbers go together with the Lightning LoRA: without it you would normally need more steps and a higher cfg.",
+      "tryIt": "Raise steps to 20 and cfg to 4 with the LoRA on and see whether it helps or hurts.",
+      "focus": "steps",
+      "source": [
+        "docs/reports/track_facts.md: Gen Image with Qwen and Prompt Enhancer.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "VAEDecode"
+      },
+      "title": "Latent to pixels",
+      "body": "Decodes the result into a visible image.",
+      "tryIt": "Follow the wire back to the VAE loader.",
+      "source": [
+        "docs/reports/track_facts.md: Gen Image with Qwen and Prompt Enhancer.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "SaveImage"
+      },
+      "title": "Your result",
+      "body": "Previews and saves the image with the workflow embedded.",
+      "tryIt": "Queue and compare with the Flux2 lesson.",
+      "focus": "filename_prefix",
+      "source": [
+        "docs/reports/track_facts.md: Gen Image with Qwen and Prompt Enhancer.json"
+      ]
+    },
+    {
+      "queue": true,
+      "title": "Run it",
+      "body": "Queue Prompt sends the whole workflow to the GPU. Nodes light up as they run, and results appear in the Save node.",
+      "tryIt": "Press Ctrl+Enter, or the Queue button in the highlighted area."
+    }
+  ]
+}

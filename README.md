@@ -12,7 +12,7 @@ An isolated, reproducible ComfyUI workspace with beginner-friendly workflows, ho
 | `config/extra_model_paths.yaml` | Maps model folders to `./models`; add extra entries to mount existing weights without copying |
 | `custom_nodes/comfyui-ui-tooltips` | Frontend extension: hover explanations for nodes/sockets/widgets, guided tour, connection helper, finder HUD |
 | `templates/`, `workflows/` | Workflow JSONs (API + UI canvas) and canvas previews |
-| `tools/inspect_workflows.py` | Read-only report: how the tour and tooltips will treat any folder of your workflow JSONs |
+| `tools/inspect_workflows.py` | Read-only report: which lesson tracks match, and which node types lack curated tooltips, for any folder of workflow JSONs |
 | `tools/extract_track_facts.py` | Read-only: dumps a workflow's node chain, wiring, values and node-catalogue descriptions so a tour track can be written accurately |
 | `dispatch_workflow.py` | Submits an API-format workflow to the running server |
 
@@ -27,7 +27,7 @@ UI versions (`*_ui.json`) have colour-coded groups; load them via **Load** in th
 ## Guided Tour & Spatial Pilot HUD (In-Browser)
 
 Teaching overlays shipped by `custom_nodes/comfyui-ui-tooltips` (all local, zero API cost):
-* **Guided Tour (`teach_tour.js`):** click **🎓 Learn this workflow** (bottom-left) or **▶ Start Guided Tour** in the HUD. The camera glides to each real node in turn, the rest of the screen dims, the key setting is ringed in gold, and a card explains what it does, why, and a "Try it" experiment. `←` `→` move, `Esc` exits. The highlight tracks pan/zoom, and steps for nodes missing from the loaded workflow are skipped, so it works on templates 01–03. Teaching copy is the `STEPS` list at the top of the file; per-setting text comes from the same tooltips as hover help.
+* **Guided Tour (`teach_tour.js`, data-driven):** click **🎓 Learn this workflow** (bottom-left) or **▶ Start Guided Tour** in the HUD. Lessons are JSON "tracks" in `custom_nodes/comfyui-ui-tooltips/web/tours/` (listed in `tours/index.json`), not code. The tour scores each track against the workflow on your canvas, starts the best match (or shows a chooser), and for each step glides to the real node, dims the rest, rings the key setting in gold and explains it with a "Try it" experiment. `←` `→` move, `Esc` exits. Steps for nodes not in the workflow are skipped; nodes inside subgraphs (collapsed components) are found and opened for that step. Every track carries `reviewed: false` until the instructor signs off, and the card says so ("Draft lesson") with its source. Current tracks: 2D starter (SDXL Turbo/inpaint/SUPIR), Flux2 generation, Qwen generation, Qwen Edit inpainting, TRELLIS.2 mesh, mesh projection → albedo. To add or fix a lesson, edit its JSON file (format is in the header of `teach_tour.js`).
 * **Spatial Pilot HUD (`spatial_grid.js`):** draggable/minimizable panel with a keyword finder (`denoise`, `seed`, `supir`) that centers the canvas on the match, optional Chrome voice input, and an alphanumeric grid overlay (`G`, cells `A1`–`T12`).
 
 ## Connection Helper & universal tooltips

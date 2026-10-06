@@ -66,6 +66,25 @@ export const WIDGET_DESCRIPTIONS = {
     "value": "Value held by this node.",
     "multiline": "Allows several lines of text.",
 
+    "unet_name": "Diffusion model file to load, from your diffusion_models / unet folder.",
+    "clip_name": "Text-encoder file to load, from your text_encoders / clip folder.",
+    "type": "Which model family this text encoder is used with (for example flux2 or qwen_image). Must match the diffusion model.",
+    "device": "Where this model runs: 'default' lets ComfyUI decide (normally the GPU).",
+    "weight_dtype": "Numeric precision the model weights are loaded in. 'default' keeps the file's own precision; FP8 options use less VRAM.",
+    "shift": "Sampling-schedule shift for this model family. Changes how noise levels are spread across the steps.",
+    "tile_size": "Size of each tile when decoding in tiles. Smaller tiles use less memory.",
+    "overlap": "How much neighboring tiles overlap, to hide seams.",
+    "blur_radius": "How far the mask edge is softened, in pixels. Larger values blend the repaint more smoothly.",
+    "expand": "How many pixels to grow (positive) or shrink (negative) the mask.",
+    "enhancement_style": "How the prompt rewriter should treat your text (for example Refine).",
+    "temperature": "Randomness of the text model's output: lower is more literal, higher is more creative.",
+    "max_tokens": "Upper limit on the length of the generated text.",
+    "top_p": "Limits the text model to the most likely words that add up to this probability.",
+    "repetition_penalty": "Discourages the text model from repeating itself.",
+    "texture_size": "Width and height in pixels of the baked texture image.",
+    "file_format": "File type to write (for example glb).",
+    "background": "What to put behind the subject: Alpha means transparent.",
+
     // Inpainting parameters
     "grow_mask_by": "Expands the masked region outwards by N pixels to smoothly feather and blend inpainted seams into surrounding geometry.",
     "mask": "Single-channel grayscale transparency tensor where white (1.0) indicates regions to redraw and black (0.0) indicates locked original pixels.",
@@ -136,6 +155,59 @@ export const NODE_ROLE_DESCRIPTIONS = {
     "PrimitiveNode": "Drives a widget on another node from one shared value, so several nodes can follow one setting.",
     "Note": "A text note on the canvas. It has no effect on the image.",
 
+    // BrickHeart studio workflows (Flux2 / Qwen / Trellis2 / mesh projection). Draft text: see docs/ROADMAP_AND_IDEAS.md
+    "CLIPLoader": "Loads a standalone text-encoder file. Set 'type' to the model family it belongs to (for example qwen_image or flux2) so it is wired the right way.",
+    "DualCLIPLoader": "Loads two text encoders at once, for model families that use a pair.",
+    "UNETLoader": "Loads a diffusion model on its own (no text encoder or VAE inside), the style used by Flux and Qwen files. Pair it with a CLIP loader and a VAE loader.",
+    "UnetLoaderGGUF": "Loads a quantized (GGUF) diffusion model: smaller in VRAM than the full-precision file, with a small quality trade-off.",
+    "LoraLoaderModelOnly": "Applies a LoRA (a small add-on that changes the model's behavior) to the diffusion model only. Strength sets how strongly.",
+    "PrimitiveInt": "Holds one whole number you can wire into several nodes, so they always agree (for example width and height).",
+    "PrimitiveFloat": "Holds one decimal number you can wire into several nodes.",
+    "PrimitiveString": "Holds one line of text you can wire into other nodes.",
+    "PrimitiveStringMultiline": "Holds a block of text (such as a prompt) you can wire into other nodes.",
+    "PrimitiveBoolean": "Holds a true/false switch you can wire into other nodes.",
+    "ComfySwitchNode": "Chooses between two inputs depending on a true/false switch.",
+    "RMBG": "Removes the background from an image, leaving the subject with transparency (or a solid color).",
+    "ReferenceLatent": "Attaches a reference image (as a latent) to the prompt conditioning so an edit model can use it as guidance.",
+    "ModelSamplingAuraFlow": "Adjusts the sampling schedule for AuraFlow-style models (including Qwen Image). 'shift' changes how the schedule is spread.",
+    "CFGNorm": "Normalizes the effect of guidance strength (CFG). Advanced: leave at defaults unless a workflow says otherwise.",
+    "KSamplerSelect": "Picks the sampler algorithm for the custom-sampler setup.",
+    "Flux2Scheduler": "Builds the list of noise levels (the schedule) for Flux2. You set the number of steps and the image size.",
+    "RandomNoise": "Provides the starting noise from a seed for the custom-sampler setup.",
+    "CFGGuider": "Combines the model with positive and negative prompts and a CFG strength, producing the guider the custom sampler follows.",
+    "SamplerCustomAdvanced": "Runs the denoising loop from separate parts: noise, guider, sampler and schedule. The modular alternative to KSampler.",
+    "TextEncodeQwenImageEditPlus": "Prompt encoder for Qwen Image Edit: reads your edit instruction plus the input image(s) and the VAE, so the model can see what it is editing.",
+    "EmptyFlux2LatentImage": "Creates a blank Flux2-format latent at the chosen size to start generation from.",
+    "EmptySD3LatentImage": "Creates a blank latent in the SD3-style format (also used by Qwen Image) to start generation from.",
+    "VAEDecodeTiled": "Decodes a latent to pixels in tiles to save memory. tile_size and overlap control the tiling.",
+    "Canny": "Detects edges in an image (outlines). Useful as a clean structure guide.",
+    "SolidMask": "Creates a mask filled with a single value at a given size (1 means all white).",
+    "InvertMask": "Flips a mask: white becomes black and black becomes white.",
+    "MaskToImage": "Converts a mask into a viewable grayscale image.",
+    "LoadImageMask": "Loads one color channel of an image file as a mask.",
+    "ImageCompositeMasked": "Pastes one image onto another through a mask, at a given position.",
+    "GetImageSize": "Reads an image's width and height so other nodes can match it.",
+    "GrowMaskWithBlur": "Expands or shrinks a mask and blurs its edge so repaints blend smoothly.",
+    "SetLatentNoiseMask": "Limits sampling to a masked region of the latent, so only that area changes.",
+    "ResizeMask": "Resizes a mask to a given size.",
+    "ImageScaleToMaxDimension": "Scales an image so its longest side matches a target size.",
+    "Preview3D": "Shows a 3D model file in the UI so you can orbit around it.",
+    "AILab_QwenVL_PromptEnhancer": "Uses a Qwen vision-language model to rewrite a short prompt into a richer one.",
+    "Trellis2LoadModel": "Loads the TRELLIS.2 3D generation model. low_vram trades speed for fitting on smaller GPUs.",
+    "Trellis2LoadImageWithTransparency": "Loads the source image for 3D generation, keeping its transparency.",
+    "Trellis2PreProcessImage": "Pads and resizes the source image (and can remove its background) before 3D generation.",
+    "Trellis2ImageCondGenerator": "Extracts features from the source image that guide the later 3D generation passes.",
+    "Trellis2SparseGenerator": "First generation pass: roughly decides where the object occupies space.",
+    "Trellis2ShapeGenerator": "Second generation pass: refines the rough structure into detailed shape.",
+    "Trellis2TexSlatGenerator": "Third generation pass: generates the surface appearance for the shape.",
+    "Trellis2DecodeLatents": "Decodes the generated data into an actual mesh with texture information.",
+    "Trellis2ReconstructMeshWithQuad": "Rebuilds the mesh with quad faces and can remove floaters and inner faces.",
+    "Trellis2SimplifyMesh": "Reduces the mesh's polygon count toward a target face number.",
+    "Trellis2FillHolesWithCuMesh": "Fills holes in the mesh (CuMesh method).",
+    "Trellis2FillHolesNicelyWithMeshlib": "Fills holes in the mesh more carefully (Meshlib method).",
+    "Trellis2UnWrapAndRasterizer": "Flattens the 3D surface into a 2D UV layout and bakes the texture onto it.",
+    "Trellis2ExportMesh": "Writes the finished mesh to disk (for example as .glb).",
+
     // Inpainting nodes
     "VAEEncodeForInpaint": "Encodes an image and an alpha mask into latent space specifically formatted for inpainting, locking unmasked areas.",
     "InpaintModelConditioning": "Combines latent representations, masks, and conditioning vectors to guide localized diffusion repainting.",
@@ -159,12 +231,31 @@ export const BUTTON_DESCRIPTIONS = {
 // then the node author's own description (ComfyUI /object_info), then a category-based sentence.
 export function describeNode(cls, def) {
     if (NODE_ROLE_DESCRIPTIONS[cls]) return NODE_ROLE_DESCRIPTIONS[cls];
-    if (def && def.description) return def.description;
-    if (def && def.category) {
-        const cat = String(def.category).split("/").join(" › ");
-        return `${def.display_name || cls}: a ${cat} node. Hover its sockets and settings for details.`;
+    if (def && def.description) return trimText(def.description);
+    if (def) {
+        const ins = [];
+        for (const g of ["required", "optional"]) {
+            for (const [name, cfg] of Object.entries((def.input || {})[g] || {})) {
+                if (typeof cfg[0] === "string" && cfg[0] === cfg[0].toUpperCase() && !["INT", "FLOAT", "STRING", "BOOLEAN", "COMBO"].includes(cfg[0])) ins.push(`${name} (${cfg[0]})`);
+            }
+        }
+        const outs = (def.output || []).map((t, i) => (def.output_name || [])[i] || t);
+        const cat = def.category ? String(def.category).split("/").join(" › ") : "";
+        const parts = [`${def.display_name || cls}${cat ? ` (${cat})` : ""}.`];
+        if (ins.length) parts.push(`Takes ${ins.slice(0, 5).join(", ")}${ins.length > 5 ? "…" : ""}.`);
+        if (outs.length) parts.push(`Produces ${outs.slice(0, 4).join(", ")}.`);
+        return parts.join(" ");
     }
     return "";
+}
+
+// Author descriptions can be long (some are whole recipe tables). Keep the first sentence or two.
+function trimText(s) {
+    const flat = String(s).replace(/\s+/g, " ").trim();
+    if (flat.length <= 220) return flat;
+    const cut = flat.slice(0, 220);
+    const end = Math.max(cut.lastIndexOf(". "), cut.lastIndexOf("; "));
+    return (end > 80 ? cut.slice(0, end + 1) : cut.slice(0, cut.lastIndexOf(" ")).trimEnd() + "…");
 }
 
 function describeWidget(widget) {

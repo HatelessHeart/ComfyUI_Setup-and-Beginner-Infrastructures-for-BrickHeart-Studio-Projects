@@ -4,7 +4,7 @@ Usage:  python tools/inspect_workflows.py <folder> [--out report.md]
 
 Scans a folder (recursively) for ComfyUI workflow JSON files, then for each one lists:
   - node types and titles found
-  - which guided-tour steps would show / be skipped (read from teach_tour.js)
+  - which guided-tour lessons (tours/*.json) would be offered and how many steps match
   - node types with no curated tooltip text (they fall back to the node author's
     description or category; read from tooltips.js)
 It only reads files. It never modifies or uploads anything.
@@ -16,15 +16,21 @@ ROOT = Path(__file__).resolve().parent.parent
 WEB = ROOT / "custom_nodes" / "comfyui-ui-tooltips" / "web"
 
 
-def tour_steps():
-    src = (WEB / "teach_tour.js").read_text(encoding="utf-8")
-    block = src[src.index("const STEPS = ["):src.index("const GOLD")]
-    steps = []
-    for m in re.finditer(r"find:\s*\{\s*type:\s*\"([^\"]+)\"(?:,\s*nth:\s*(\d+))?\s*\}[^\n]*\n(?:\s*focus:\s*(\[[^\]]*\]|\"[^\"]*\"),)?\s*title:\s*\"([^\"]+)\"", block):
-        steps.append((m.group(1), int(m.group(2) or 0), m.group(4)))
-    if "queue: true" in block:
-        steps.append((None, 0, "Run it (Queue button)"))
-    return steps
+def tracks():
+    """Lesson tracks from tours/*.json: [(id, title, [(type, nth, step title)], has_queue)]."""
+    tdir = WEB / "tours"
+    out = []
+    idx = json.loads((tdir / "index.json").read_text(encoding="utf-8"))
+    for f in idx.get("tracks", []):
+        t = json.loads((tdir / f).read_text(encoding="utf-8"))
+        steps = []
+        for st in t.get("steps", []):
+            if st.get("queue"):
+                continue
+            fd = st.get("find", {})
+            steps.append((fd.get("type"), fd.get("nth", 0), st.get("title", "?"), fd.get("titleIncludes")))
+        out.append((t["id"], t.get("title", t["id"]), steps))
+    return out
 
 
 def curated_types():
@@ -45,7 +51,11 @@ def load_nodes(path):
     return None
 
 
+TRACKS = []
+
+
 def main():
+    global TRACKS
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     if not args:
         print(__doc__); sys.exit(1)
@@ -53,7 +63,8 @@ def main():
     out = None
     if "--out" in sys.argv:
         out = Path(sys.argv[sys.argv.index("--out") + 1])
-    steps, curated = tour_steps(), curated_types()
+    TRACKS = tracks()
+    curated = curated_types()
     lines = [f"# Workflow inspection: {folder}", ""]
     found = 0
     for p in sorted(folder.rglob("*.json")):
@@ -67,16 +78,22 @@ def main():
         for t, title, pos in nodes:
             types.setdefault(t, []).append((pos[0] if pos else 0, title))
         lines += [f"## {p}", f"- nodes: {len(nodes)}  |  distinct types: {len(types)}"]
-        lines.append("- tour steps:")
-        shown = 0
-        for t, nth, title in steps:
-            if t is None:
-                ok = True
-            else:
-                ok = len(types.get(t, [])) > nth
-            shown += ok
-            lines.append(f"  - {'SHOW ' if ok else 'skip '} {title}" + ("" if ok or t is None else f"  (needs {t} #{nth + 1})"))
-        lines.append(f"- tour would run {shown}/{len(steps)} steps" + ("  **(no tour: need at least 2)**" if shown < 2 else ""))
+        lines.append("- lessons:")
+        best = None
+        for tid, ttitle, tsteps in TRACKS:
+            found = 0
+            for t, nth, title, tinc in tsteps:
+                cands = types.get(t, [])
+                if tinc:
+                    cands = [c for c in cands if tinc.lower() in (c[1] or "").lower()]
+                found += len(cands) > nth
+            ratio = found / len(tsteps) if tsteps else 0
+            if found >= 3 and ratio >= 0.34:
+                lines.append(f"  - {ttitle}: {found}/{len(tsteps)} steps")
+                if not best or ratio > best[0]:
+                    best = (ratio, ttitle)
+        if not best:
+            lines.append("  - **no lesson matches** (tour offers none; candidates for a new track)")
         missing = sorted(t for t in types if t and t not in curated)
         lines.append(f"- types WITHOUT curated tooltip text ({len(missing)}): " + (", ".join(missing) if missing else "none"))
         lines.append("")

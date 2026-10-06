@@ -1,0 +1,196 @@
+{
+  "id": "flux2_generation",
+  "title": "Flux2 Klein: text to image with prompt enhancer",
+  "summary": "Custom-sampler workflow: separate model, text encoder and VAE loaders, an optional AI prompt rewriter, then noise + guider + sampler + schedule assembled by hand.",
+  "reviewed": false,
+  "steps": [
+    {
+      "find": {
+        "type": "UNETLoader"
+      },
+      "title": "The diffusion model",
+      "body": "This loads the image model itself. This workflow uses flux-2-klein-9b-kv-fp8, an FP8 file, which is smaller than full precision so it fits more comfortably in VRAM. Unlike a checkpoint, this file holds only the model: the text encoder and VAE are loaded separately.",
+      "tryIt": "Don't swap files yet. Just notice the three loaders (model, CLIP, VAE) are separate nodes here.",
+      "focus": "unet_name",
+      "source": [
+        "docs/reports/track_facts.md: Gen Image with Flux2 and Prompt Enhancer.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "CLIPLoader"
+      },
+      "title": "The text encoder",
+      "body": "The text encoder turns words into numbers the model understands. Here it is a Qwen 3 8B model, and the 'type' is set to flux2 so ComfyUI wires it up the way Flux2 expects. A mismatched type is a common cause of errors or garbage output.",
+      "tryIt": "If you change the model, check this 'type' still matches the model family.",
+      "focus": "type",
+      "source": [
+        "docs/reports/track_facts.md: Gen Image with Flux2 and Prompt Enhancer.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "VAELoader"
+      },
+      "title": "The VAE",
+      "body": "The VAE converts between the compact latent image the model works in and the pixels you see. Flux2 uses its own VAE file (flux2-vae). It must match the model family.",
+      "tryIt": "Leave it. If colors look washed out after a model swap, a mismatched VAE is a prime suspect.",
+      "focus": "vae_name",
+      "source": [
+        "docs/reports/track_facts.md: Gen Image with Flux2 and Prompt Enhancer.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "PrimitiveStringMultiline",
+        "titleIncludes": "String"
+      },
+      "title": "Your idea, in plain words",
+      "body": "This is the short prompt you write. When the enhancer is switched on, it gets rewritten into a richer description before the image model sees it.",
+      "tryIt": "Edit this text, then Queue. Try one short sentence.",
+      "focus": "value",
+      "source": [
+        "docs/reports/track_facts.md: Gen Image with Flux2 and Prompt Enhancer.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "AILab_QwenVL_PromptEnhancer"
+      },
+      "title": "The prompt rewriter",
+      "body": "A small vision-language model (Qwen3-VL-4B-Instruct here) expands your short prompt. The style is set to Refine, and temperature 0.7 controls how adventurous the rewrite is: lower is more literal, higher is more creative.",
+      "tryIt": "Change enhancement_style and compare what comes out.",
+      "focus": "enhancement_style",
+      "source": [
+        "docs/reports/track_facts.md: Gen Image with Flux2 and Prompt Enhancer.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "PrimitiveBoolean",
+        "titleIncludes": "Enhance"
+      },
+      "title": "Enhancer on/off",
+      "body": "This true/false switch feeds a Switch node. True sends the rewritten prompt to the image model; false sends your original text untouched. It is the quickest way to see what the rewriter is adding.",
+      "tryIt": "Turn it off, Queue, then on again and compare the two images.",
+      "focus": "value",
+      "source": [
+        "docs/reports/track_facts.md: Gen Image with Flux2 and Prompt Enhancer.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "CLIPTextEncode",
+        "titleIncludes": "Positive"
+      },
+      "title": "Positive prompt",
+      "body": "The chosen text (rewritten or original) arrives here and becomes the conditioning that pulls the image toward your description. The text box is empty because the text is wired in from the Switch.",
+      "tryIt": "Nothing to type here: change the prompt upstream.",
+      "focus": "text",
+      "source": [
+        "docs/reports/track_facts.md: Gen Image with Flux2 and Prompt Enhancer.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "PrimitiveInt",
+        "titleIncludes": "Width"
+      },
+      "title": "One size, used twice",
+      "body": "Width and height are set once, here, and wired to both the empty latent and the scheduler so they can never disagree. This workflow uses 1024 by 1024.",
+      "tryIt": "Change Width to 768, Queue, and notice speed and detail.",
+      "focus": "value",
+      "source": [
+        "docs/reports/track_facts.md: Gen Image with Flux2 and Prompt Enhancer.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "Flux2Scheduler"
+      },
+      "title": "The schedule: how many steps",
+      "body": "The scheduler decides the sequence of noise levels the sampler walks through. 'steps' is how many. This workflow uses 8, which is a low number. Check the model's page for its recommended step range before changing it a lot.",
+      "tryIt": "Try 4, then 16, and compare quality against time.",
+      "focus": "steps",
+      "source": [
+        "docs/reports/track_facts.md: Gen Image with Flux2 and Prompt Enhancer.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "CFGGuider"
+      },
+      "title": "The guider: how hard to follow the prompt",
+      "body": "CFG scale sets how strongly the image is pushed toward your prompt. This workflow uses 1.5. Very high values tend to over-saturate and look burned.",
+      "tryIt": "Try 1.0 and 3.0 and compare.",
+      "focus": "cfg",
+      "source": [
+        "docs/reports/track_facts.md: Gen Image with Flux2 and Prompt Enhancer.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "KSamplerSelect"
+      },
+      "title": "The sampler algorithm",
+      "body": "This chooses the math used to step from noise to image. This workflow uses euler.",
+      "tryIt": "Leave it unless you are comparing samplers.",
+      "focus": "sampler_name",
+      "source": [
+        "docs/reports/track_facts.md: Gen Image with Flux2 and Prompt Enhancer.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "RandomNoise"
+      },
+      "title": "The starting noise",
+      "body": "The noise seed fixes the starting static. Same seed plus same settings reproduces the same image; change it for a different composition.",
+      "tryIt": "Change the seed by one and Queue.",
+      "focus": "noise_seed",
+      "source": [
+        "docs/reports/track_facts.md: Gen Image with Flux2 and Prompt Enhancer.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "SamplerCustomAdvanced"
+      },
+      "title": "Putting it together",
+      "body": "This node takes the four ingredients you just saw (noise, guider, sampler, schedule) plus the empty latent, and runs the denoising loop. In a classic KSampler those are all hidden inside one node; here you can see and swap each part.",
+      "tryIt": "Follow the five incoming wires back to the nodes you just visited.",
+      "source": [
+        "docs/reports/track_facts.md: Gen Image with Flux2 and Prompt Enhancer.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "VAEDecode"
+      },
+      "title": "Latent to pixels",
+      "body": "Turns the finished latent into a normal image using the VAE you loaded earlier.",
+      "tryIt": "Follow the wire back to the VAE loader.",
+      "source": [
+        "docs/reports/track_facts.md: Gen Image with Flux2 and Prompt Enhancer.json"
+      ]
+    },
+    {
+      "find": {
+        "type": "SaveImage"
+      },
+      "title": "Your result",
+      "body": "The image is previewed here and saved with the prefix shown. The workflow is embedded in the saved file, so you can drag the image back onto the canvas to restore every setting.",
+      "tryIt": "Queue and watch the image appear.",
+      "focus": "filename_prefix",
+      "source": [
+        "docs/reports/track_facts.md: Gen Image with Flux2 and Prompt Enhancer.json"
+      ]
+    },
+    {
+      "queue": true,
+      "title": "Run it",
+      "body": "Queue Prompt sends the whole workflow to the GPU. Nodes light up as they run, and results appear in the Save node.",
+      "tryIt": "Press Ctrl+Enter, or the Queue button in the highlighted area."
+    }
+  ]
+}
