@@ -218,6 +218,7 @@ app.registerExtension({
         const pill = document.createElement("button");
         pill.id = "brickheart-tour-pill";
         pill.textContent = "🎓 Learn this workflow";
+        pill.title = "Start a step-by-step guided tour of the workflow on your canvas";
         pill.style.cssText = [
             "position:fixed", "left:16px", "bottom:16px", "z-index:999985", "padding:9px 14px",
             `background:#005b64`, "color:#fff", `border:1px solid ${CYAN}`, "border-radius:999px",
@@ -246,9 +247,10 @@ app.registerExtension({
             return out.length > 1 ? out : [];
         }
 
-        function btn(label, primary) {
+        function btn(label, primary, tip) {
             const b = document.createElement("button");
             b.textContent = label;
+            if (tip) b.title = tip;
             b.style.cssText = [
                 "padding:7px 14px", "border-radius:6px", "font:600 13px system-ui,sans-serif", "cursor:pointer",
                 `border:1px solid ${CYAN}`, primary ? "background:#00838f;color:#fff" : "background:transparent;color:#80deea",
@@ -306,19 +308,19 @@ app.registerExtension({
 
             const row = document.createElement("div");
             row.style.cssText = "display:flex;justify-content:space-between;align-items:center;margin-top:12px;gap:8px;";
-            const exit = btn("Exit tour");
+            const exit = btn("Exit tour", false, "Close the tour and return to normal editing (Esc)");
             exit.onclick = stop;
             const hint = document.createElement("span");
             hint.style.cssText = "font-size:11px;color:#6fa8b0;";
             hint.textContent = "← → keys to move · Esc to exit";
             const nav = document.createElement("div");
             nav.style.cssText = "display:flex;gap:8px;";
-            const back = btn("Back");
+            const back = btn("Back", false, "Previous step (← key)");
             back.disabled = idx === 0;
             back.style.opacity = idx === 0 ? "0.4" : "1";
             back.onclick = () => go(idx - 1);
             const last = idx === total - 1;
-            const next = btn(last ? "Finish" : "Next", true);
+            const next = btn(last ? "Finish" : "Next", true, last ? "End the tour" : "Next step (→ key)");
             next.onclick = () => (last ? stop() : go(idx + 1));
             nav.append(back, next);
             row.append(exit, hint, nav);

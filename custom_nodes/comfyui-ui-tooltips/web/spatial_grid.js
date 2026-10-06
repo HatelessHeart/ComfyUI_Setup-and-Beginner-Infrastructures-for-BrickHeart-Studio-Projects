@@ -100,6 +100,7 @@ app.registerExtension({
         readout.style.borderRadius = "4px";
         readout.style.border = "1px solid rgba(0, 229, 255, 0.15)";
         readout.innerText = "Hover Block: [ -- ]";
+        readout.title = "Grid cell under your mouse (needs the grid overlay on)";
         body.appendChild(readout);
 
         // --- PROMPT SEARCH & VOICE INPUT (0 TOKENS / LOCAL DOM) ---
@@ -111,6 +112,7 @@ app.registerExtension({
         const promptInput = document.createElement("input");
         promptInput.type = "text";
         promptInput.placeholder = 'Find: "denoise", "seed", "supir"...';
+        promptInput.title = "Type a node or setting name and press Enter to jump to it on the canvas";
         promptInput.style.flex = "1";
         promptInput.style.background = "rgba(0, 30, 45, 0.7)";
         promptInput.style.border = "1px solid #00e5ff";
@@ -239,6 +241,7 @@ app.registerExtension({
         const toggleBtn = document.createElement("button");
         toggleBtn.id = "brickheart-grid-toggle";
         toggleBtn.innerText = "Toggle Grid Overlay (G)";
+        toggleBtn.title = "Show or hide a lettered coordinate grid over the screen, useful for pointing at things (G key)";
         toggleBtn.style.background = "#005b64";
         toggleBtn.style.color = "#ffffff";
         toggleBtn.style.border = "1px solid #00e5ff";
@@ -264,6 +267,7 @@ app.registerExtension({
 
         const tourBtn = document.createElement("button");
         tourBtn.innerText = "▶ Start Guided Tour";
+        tourBtn.title = "Step-by-step walkthrough of the workflow on your canvas";
         tourBtn.style.background = "#00838f";
         tourBtn.style.color = "#ffffff";
         tourBtn.style.border = "1px solid #00e5ff";
@@ -279,6 +283,7 @@ app.registerExtension({
         // Clear Spotlights Button
         const clearBtn = document.createElement("button");
         clearBtn.innerText = "Clear Spotlights";
+        clearBtn.title = "Remove the gold spotlight boxes from the grid";
         clearBtn.style.background = "transparent";
         clearBtn.style.color = "#80cbc4";
         clearBtn.style.border = "1px solid rgba(128, 203, 196, 0.3)";

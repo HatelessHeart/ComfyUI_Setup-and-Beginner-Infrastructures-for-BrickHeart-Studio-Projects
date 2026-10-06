@@ -1,7 +1,7 @@
 import { app } from "../../scripts/app.js";
 
 // Comprehensive dictionaries explaining ComfyUI primitives & SUPIR types
-const SOCKET_DESCRIPTIONS = {
+export const SOCKET_DESCRIPTIONS = {
     "MODEL": "Diffusion model backbone (UNet/DiT) containing learned neural weights used to denoise latents.",
     "CLIP": "Contrastive Language-Image Pre-Training model. Encodes natural language text prompts into mathematical embedding vectors.",
     "VAE": "Variational Auto-Encoder. Compresses raw pixel images into latent space (1/8th size) and decodes latents back to visible images.",
@@ -14,10 +14,22 @@ const SOCKET_DESCRIPTIONS = {
     "SUPIRMODEL": "Combined SUPIR control model and SDXL diffusion backbone for image restoration.",
     "SUPIRVAE": "SUPIR Variational Auto-Encoder supporting tiled encoding/decoding and deep feature extraction.",
     "SUPIR_cond_pos": "Positive conditioning tensor formatted for SUPIR's dual-text and aesthetic guidance.",
-    "SUPIR_cond_neg": "Negative conditioning tensor formatted for SUPIR's unconditional guidance."
+    "SUPIR_cond_neg": "Negative conditioning tensor formatted for SUPIR's unconditional guidance.",
+    "STRING": "Plain text value (prompts, filenames, labels).",
+    "INT": "Whole-number value (steps, seed, pixel sizes).",
+    "FLOAT": "Decimal value (cfg, denoise, strengths).",
+    "BOOLEAN": "On/off switch (true or false).",
+    "CLIP_VISION": "Image-understanding encoder (CLIP vision) used by image-prompt adapters such as IP-Adapter or unCLIP.",
+    "CLIP_VISION_OUTPUT": "Embedding produced by a CLIP vision model from a reference image.",
+    "STYLE_MODEL": "Adapter that transfers the look of a reference image into conditioning.",
+    "GLIGEN": "Grounded-generation model that places objects in boxes you define.",
+    "SAMPLER": "A sampling algorithm object (Euler, DPM++ ...) for advanced custom-sampler workflows.",
+    "SIGMAS": "A list of noise levels, one per step. Defines the denoising schedule for custom samplers.",
+    "NOISE": "Noise source object for custom samplers.",
+    "GUIDER": "Guidance object (CFG, basic, etc.) used by custom samplers."
 };
 
-const WIDGET_DESCRIPTIONS = {
+export const WIDGET_DESCRIPTIONS = {
     // Core parameters
     "seed": "Numerical starting seed. Changing the seed alters the initial random noise distribution, producing a completely different composition.",
     "control_after_generate": "Determines how the seed updates after each run: 'randomize', 'increment', 'decrement', or 'fixed' (keep exact same seed).",
@@ -34,6 +46,25 @@ const WIDGET_DESCRIPTIONS = {
     "filename_prefix": "Subfolder and filename template prepended to saved outputs in the output directory.",
     "image": "Input image selection or uploaded file to load into the canvas pipeline.",
     "upload": "Upload an image file directly from local storage into the node.",
+
+    "strength": "How strongly this effect is applied. 0 = off, 1 = full. LoRAs often sit between 0.6 and 1.0.",
+    "strength_model": "LoRA strength on the diffusion model (changes the picture).",
+    "strength_clip": "LoRA strength on the text encoder (changes how prompts are read).",
+    "lora_name": "LoRA file to apply, from your loras folder.",
+    "vae_name": "VAE file to use for encode/decode, from your vae folder.",
+    "control_net_name": "ControlNet file to load, from your controlnet folder.",
+    "model_name": "Model file to load from the matching models folder.",
+    "start_percent": "Fraction of the sampling process at which this effect begins (0 = first step).",
+    "end_percent": "Fraction of the sampling process at which this effect stops (1 = last step).",
+    "stop_at_clip_layer": "How many CLIP layers to skip from the end. -1 is normal; -2 is common for anime-style models.",
+    "crop": "How to fit an image to a new size: center-crop or disabled.",
+    "add_noise": "Whether the sampler adds fresh noise before denoising.",
+    "return_with_leftover_noise": "Leave some noise in the result so a later sampler can finish the job.",
+    "start_at_step": "First denoising step this sampler runs (advanced multi-sampler workflows).",
+    "end_at_step": "Last denoising step this sampler runs (advanced multi-sampler workflows).",
+    "noise_seed": "Starting seed for the noise. Same seed and settings reproduce the same image.",
+    "value": "Value held by this node.",
+    "multiline": "Allows several lines of text.",
 
     // Inpainting parameters
     "grow_mask_by": "Expands the masked region outwards by N pixels to smoothly feather and blend inpainted seams into surrounding geometry.",
@@ -72,7 +103,7 @@ const WIDGET_DESCRIPTIONS = {
     "negative_prompt": "Unwanted features and artifacts to suppress during the SUPIR restoration pass."
 };
 
-const NODE_ROLE_DESCRIPTIONS = {
+export const NODE_ROLE_DESCRIPTIONS = {
     // Core nodes
     "KSampler": "Executes the iterative denoising diffusion loop over a latent image guided by positive/negative conditioning.",
     "CheckpointLoaderSimple": "Loads a standalone .safetensors model file containing the Model, CLIP, and VAE components.",
@@ -84,6 +115,26 @@ const NODE_ROLE_DESCRIPTIONS = {
     "SaveImage": "Writes rendered pixel images to the project output directory with embedded workflow generation metadata.",
     "ImageScaleBy": "Scales an image tensor by a multiplicative factor using bicubic, bilinear, or lanczos filtering.",
     "LoadImage": "Loads an external or rendered image into the canvas with support for embedded masks and the interactive Mask Editor.",
+
+    "VAELoader": "Loads a standalone VAE file, to replace the VAE baked into a checkpoint (often fixes washed-out colors).",
+    "LoraLoader": "Applies a LoRA (small add-on weights for a style or subject) to the MODEL and CLIP. Strength controls how strongly.",
+    "CLIPSetLastLayer": "Stops CLIP early (clip skip). Some models are trained expecting -2.",
+    "ControlNetLoader": "Loads a ControlNet model that steers composition from edge, depth or pose maps.",
+    "ControlNetApplyAdvanced": "Applies a ControlNet to your prompt conditioning using a guide image, with strength and start/end timing.",
+    "UpscaleModelLoader": "Loads a super-resolution model (ESRGAN, RealESRGAN ...) for pixel upscaling.",
+    "ImageUpscaleWithModel": "Upscales an image with a loaded upscale model. Sharper than simple resizing.",
+    "LatentUpscale": "Resizes a latent directly. Fast but soft; usually followed by a low-denoise sampler pass.",
+    "ImageScale": "Resizes an image to exact width and height.",
+    "PreviewImage": "Shows an image in the UI without saving it to disk.",
+    "ConditioningCombine": "Merges two prompt conditionings so both apply.",
+    "ConditioningSetMask": "Limits a prompt's conditioning to a masked region.",
+    "VAEEncode": "Compresses a full-resolution pixel image into a 4-channel latent tensor for img2img or inpainting.",
+    "SetLatentNoiseMask": "Attaches a mask to a latent so the sampler only changes the masked area.",
+    "MaskToImage": "Converts a mask into a viewable grayscale image.",
+    "ImageToMask": "Extracts one color channel of an image as a mask.",
+    "Reroute": "A pass-through point that tidies long wires. It does not change data.",
+    "PrimitiveNode": "Drives a widget on another node from one shared value, so several nodes can follow one setting.",
+    "Note": "A text note on the canvas. It has no effect on the image.",
 
     // Inpainting nodes
     "VAEEncodeForInpaint": "Encodes an image and an alpha mask into latent space specifically formatted for inpainting, locking unmasked areas.",
@@ -98,11 +149,35 @@ const NODE_ROLE_DESCRIPTIONS = {
     "SUPIR_Upscale": "Legacy monolithic node executing end-to-end SUPIR upscaling, tiling, and restoration in a single step."
 };
 
-const BUTTON_DESCRIPTIONS = {
+export const BUTTON_DESCRIPTIONS = {
     "#queue-button": "Queue Prompt: Dispatch current workflow to the ComfyUI execution queue (Shortcut: Ctrl+Enter).",
     "#extra-options-button": "Extra Options: Access batch count, queue auto-trigger, and queue management.",
     "#autoQueueCheckbox": "Auto Queue: Automatically re-queue generations whenever you modify a prompt or node parameter."
 };
+
+// Best available plain-language description for a node class: our curated text first,
+// then the node author's own description (ComfyUI /object_info), then a category-based sentence.
+export function describeNode(cls, def) {
+    if (NODE_ROLE_DESCRIPTIONS[cls]) return NODE_ROLE_DESCRIPTIONS[cls];
+    if (def && def.description) return def.description;
+    if (def && def.category) {
+        const cat = String(def.category).split("/").join(" › ");
+        return `${def.display_name || cls}: a ${cat} node. Hover its sockets and settings for details.`;
+    }
+    return "";
+}
+
+function describeWidget(widget) {
+    const known = WIDGET_DESCRIPTIONS[widget.name];
+    if (known) return `${widget.name}: ${known}`;
+    const t = widget.type;
+    if (t === "combo") return `${widget.name}: pick one option from the list. Options come from the files and choices installed in your ComfyUI.`;
+    if (t === "number" || t === "slider") return `${widget.name}: numeric setting. Drag, click the arrows, or double-click to type a value.`;
+    if (t === "toggle") return `${widget.name}: on/off switch. Click to toggle.`;
+    if (t === "text" || t === "customtext") return `${widget.name}: text field. Click to edit.`;
+    if (t === "button") return `${widget.name}: button. Click to run its action.`;
+    return `${widget.name} (${t}): configurable parameter.`;
+}
 
 app.registerExtension({
     name: "ComfyUI.UITooltips",
@@ -141,6 +216,12 @@ app.registerExtension({
         if (NODE_ROLE_DESCRIPTIONS[nodeType]) {
             node.desc = NODE_ROLE_DESCRIPTIONS[nodeType];
             node.title = `${node.title || nodeType} [${NODE_ROLE_DESCRIPTIONS[nodeType]}]`;
+        } else {
+            // Any other installed node (including custom nodes): use the author's description or category.
+            // Hover-only: the title is left alone so the canvas stays readable.
+            const def = node.constructor && node.constructor.nodeData;
+            const text = describeNode(nodeType, def);
+            if (text) node.desc = text;
         }
 
         // 2. Annotate Input Sockets
@@ -162,12 +243,7 @@ app.registerExtension({
         // 4. Annotate Parameter Widgets
         if (node.widgets) {
             for (const widget of node.widgets) {
-                const desc = WIDGET_DESCRIPTIONS[widget.name];
-                if (desc) {
-                    widget.tooltip = `${widget.name}: ${desc}`;
-                } else {
-                    widget.tooltip = `${widget.name} (${widget.type}): Configurable parameter.`;
-                }
+                widget.tooltip = describeWidget(widget);
             }
         }
     }
