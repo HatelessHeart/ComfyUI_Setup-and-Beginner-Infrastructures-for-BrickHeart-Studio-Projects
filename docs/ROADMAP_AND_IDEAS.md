@@ -108,7 +108,7 @@ Risks: seams between views, lighting baked into texture (use flat/unlit passes),
 - [ ] Gemini: load in the real ComfyUI, run a depth map (estimate or mesh render pass) through both nodes, confirm outputs and tooltips.
 - [ ] Decide the depth source for the studio: depth-estimation node vs depth pass rendered from the mesh (exact). Add a template wiring Depth Slice into the mesh-projection pass (as position guide) once decided.
 - [ ] Possible follow-ups: depth to normal map; slice by absolute distance (not fraction) when the depth is metric; a tour track for the depth tools.
-- Interpretation note: "slice the fractal" was read as "slice a fraction of the depth range". Confirm with owner.
+- Resolved (owner): the "fractal" wording came from a different project pasted by mistake. The depth tools slice a *fraction of a depth range*, as built. They would also accept a depth pass from a fractal renderer, but that is not a goal of this repo.
 
 ### Licensing review (before sharing or selling anything)
 Owner: the projects are mostly the owner's own code, built on open-source repos and third-party trained models. Own code needs its own `LICENSE`; upstream repos and **model weights** carry separate terms (the usual blocker for commercial use).
