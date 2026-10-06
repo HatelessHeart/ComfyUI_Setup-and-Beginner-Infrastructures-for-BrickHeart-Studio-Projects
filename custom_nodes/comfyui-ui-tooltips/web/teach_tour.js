@@ -199,6 +199,7 @@ app.registerExtension({
         let active = false;
         let chooserOpen = false;
         let rootGraph = null; // graph open when the tour started, restored on exit
+        let startView = null; // camera (zoom + pan) when the tour started, restored on exit
         let raf = 0;
 
         // The Spatial Pilot HUD floats above everything; hide it while the tour owns the screen.
@@ -414,6 +415,7 @@ app.registerExtension({
             steps = resolved.steps;
             chooserOpen = false;
             rootGraph = app.canvas && app.canvas.graph ? app.canvas.graph : app.graph;
+            startView = app.canvas && app.canvas.ds ? { scale: app.canvas.ds.scale, offset: [app.canvas.ds.offset[0], app.canvas.ds.offset[1]] } : null;
             safeStore(() => localStorage.setItem(SEEN_KEY, "1"));
             pill.style.animation = "";
             active = true;
@@ -486,6 +488,35 @@ app.registerExtension({
             else showChooser(viable);
         }
 
+        // Put the camera back exactly where the learner had it.
+        function restoreView() {
+            const c = app.canvas;
+            if (!c || !c.ds || !startView) return;
+            c.ds.scale = startView.scale;
+            c.ds.offset[0] = startView.offset[0];
+            c.ds.offset[1] = startView.offset[1];
+            if (c.setDirty) c.setDirty(true, true);
+        }
+
+        // Emergency "I can't see my nodes": frame every node of the open graph.
+        function fitAll() {
+            const c = app.canvas;
+            const nodes = ((c && c.graph) || app.graph)._nodes || [];
+            if (!c || !c.ds || !nodes.length) return false;
+            let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+            for (const n of nodes) {
+                x0 = Math.min(x0, n.pos[0]); y0 = Math.min(y0, n.pos[1] - titleH());
+                x1 = Math.max(x1, n.pos[0] + n.size[0]); y1 = Math.max(y1, n.pos[1] + n.size[1]);
+            }
+            const b = canvasBox();
+            const scale = Math.max(0.1, Math.min(1.0, Math.min(b.width / (x1 - x0 + 80), b.height / (y1 - y0 + 80))));
+            c.ds.scale = scale;
+            c.ds.offset[0] = b.width / 2 / scale - (x0 + x1) / 2;
+            c.ds.offset[1] = b.height / 2 / scale - (y0 + y1) / 2;
+            if (c.setDirty) c.setDirty(true, true);
+            return true;
+        }
+
         function stop() {
             active = false;
             if (camAnim) camAnim.cancelled = true;
@@ -498,11 +529,13 @@ app.registerExtension({
                 const c = app.canvas;
                 if (rootGraph && c && c.graph !== rootGraph && typeof c.setGraph === "function") c.setGraph(rootGraph);
             } catch (_) { /* best effort */ }
+            restoreView();
+            startView = null;
         }
 
         pill.onclick = start;
         window.addEventListener("keydown", onKey, true);
-        window.BrickHeartTour = { start, stop, isActive: () => active, tracks: () => tracks.map(t => t.id) };
+        window.BrickHeartTour = { start, stop, fitAll, isActive: () => active, tracks: () => tracks.map(t => t.id) };
         loadTracks().then(t => { tracks = t; });
 
         // First visit: gently draw attention to the pill once. Never auto-starts or blocks the canvas.
