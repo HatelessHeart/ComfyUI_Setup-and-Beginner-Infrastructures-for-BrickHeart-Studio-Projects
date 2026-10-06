@@ -12,6 +12,7 @@ An isolated, reproducible ComfyUI workspace with beginner-friendly workflows, ho
 | `config/extra_model_paths.yaml` | Maps model folders to `./models`; add extra entries to mount existing weights without copying |
 | `custom_nodes/comfyui-ui-tooltips` | Frontend extension: hover explanations for nodes/sockets/widgets, guided tour, connection helper, finder HUD |
 | `templates/`, `workflows/` | Workflow JSONs (API + UI canvas) and canvas previews |
+| `tools/inspect_workflows.py` | Read-only report: how the tour and tooltips will treat any folder of your workflow JSONs |
 | `dispatch_workflow.py` | Submits an API-format workflow to the running server |
 
 ## Workflows
