@@ -60,7 +60,11 @@ Models expected (not in this repo): `sd_xl_base_1.0.safetensors` and `SUPIR-v0Q_
 
 ## Roadmap (BrickHeart tool integration)
 
-Planned bridges for local tools: ComfyUI-Chord (PBR maps), Depth-Anything-3, BiRefNet/RMBG, TripoSG/TripoSplat. See the integration notes in project discussions; weights stay on disk and are mounted via `extra_model_paths.yaml`.
+Planned bridges for local tools: ComfyUI-Chord (PBR maps), the B2M desktop app (albedo to PBR maps), Depth-Anything-3, BiRefNet/RMBG, TripoSG/TripoSplat. Weights stay on disk and are mounted via `extra_model_paths.yaml`. Details, open questions and status: [`docs/ROADMAP_AND_IDEAS.md`](docs/ROADMAP_AND_IDEAS.md).
+
+## License
+
+**All rights reserved** (provisional; see `LICENSE`). No permission is granted to use, copy, modify, distribute or sell the files in this repository without the owner's written permission, pending a review of the licenses of the upstream repos and models the studio builds on. Third-party components keep their own licenses: see `THIRD_PARTY_NOTICES.md`.
 
 ## Notes
 

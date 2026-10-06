@@ -1,6 +1,6 @@
 import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
-import { SOCKET_DESCRIPTIONS, NODE_ROLE_DESCRIPTIONS, describeNode } from "./tooltips.js";
+import { SOCKET_DESCRIPTIONS, describeNode } from "./tooltips.js";
 
 /**
  * BrickHeart Connection Helper
@@ -21,7 +21,7 @@ const PROJECT_TYPES = new Set([
     "SUPIR_model_loader_v2", "SUPIR_sample", "SaveImage", "VAEDecode", "VAEEncodeForInpaint",
 ]);
 const OFF_KEY = "brickheart.connect.off";
-const CYAN = "#00e5ff", GOLD = "#ffd700", AMBER = "#ffb74d";
+const CYAN = "#00e5ff", AMBER = "#ffb74d";
 const MAX_ROWS = 80;
 const INFO_TTL_MS = 30000;
 
