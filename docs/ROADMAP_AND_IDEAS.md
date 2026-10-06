@@ -83,3 +83,14 @@ Decisions / to-dos:
 - [ ] **Keep long-running training outside ComfyUI** (COLMAP / 3DGS optimisation / mesh extraction): hand off by folder + manifest, launched by a human-confirmed script in the same spirit as `download_model.py`.
 - [ ] **Risks to resolve before building:** per-view SUPIR may hallucinate different detail in each view and hurt multi-view consistency; generated views have only nominal camera poses (pose refinement may be needed); depth-edge thresholds must scale with the scene, not a fixed metres value; verify each external tool's real capabilities and **licenses** before relying on or sharing them (see `docs/PROJECTS_LICENSE_REGISTER.csv`); 12 GB VRAM means stages run one at a time with unloads.
 - [ ] Housekeeping: `workflow_report.md` (222 KB, contains local paths) is in the repo root; move under `docs/reports/` or untrack it before the repo is shared.
+
+### Idea: mesh-first texturing pipeline (owner's direction)  **[idea]**
+Instead of photo-style multi-view generation, start from a mesh you own (Trellis2 / Hunyuan3D / Meshflow):
+1. render guide passes (depth / normal / part-ID) from exact orbit cameras;
+2. paint ONE reference view with an image-edit model (Qwen Edit / Flux2) using the guides;
+3. paint remaining views conditioned on that reference (reference-latent, shared seed, inpaint only empty/hidden areas);
+4. back-project onto ONE shared UV texture (angle/visibility weighting), inpaint remaining holes in UV space;
+5. render the final turntable from the textured mesh: exact cameras, consistent by construction (suitable for 3DGS or a turntable merger).
+Roles: DINOv2-style features = cross-view consistency QA / correspondence (not a texture generator); Meta SAM = per-part masks (SAM 2 video propagation may track parts across orbit frames: to be tested). Existing `Qwen Edit Mesh Projection*` and `SAM 3.1 - Part*` workflows may already cover steps 1-4: map them before building anything new.
+Risks: seams between views, lighting baked into texture (use flat/unlit passes), poorly seen back/underside areas. Unverified: the capabilities of the external tools and of Apple's turntable script (owner quoted its flags; not inspected).
+- [ ] Map existing 3DSTUDIO workflows onto steps 1-5 once `docs/reports/track_facts.md` arrives.
