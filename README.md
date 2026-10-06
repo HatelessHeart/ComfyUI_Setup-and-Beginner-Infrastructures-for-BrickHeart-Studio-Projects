@@ -22,6 +22,14 @@ An isolated, reproducible ComfyUI workspace with beginner-friendly workflows, ho
 
 UI versions (`*_ui.json`) have colour-coded groups; load them via **Load** in the web UI.
 
+## Spatial Pilot & Teaching HUD (In-Browser)
+
+An interactive, zero-token spatial grounding overlay for visual learning and teaching:
+* **Draggable & Minimizable HUD:** Move it anywhere on the canvas so it never blocks nodes. Collapse to a floating pill with `−` / `+`.
+* **Zero-Token Prompt Search:** Type any keyword (e.g. `denoise`, `seed`, `supir`, `mask`) into the HUD prompt bar. It queries the local LiteGraph DOM in 0.1ms at 0 API cost, centers the canvas, and spotlights the exact slider or widget.
+* **Hands-Free Voice Prompts:** Uses Chrome's built-in Web Speech API (`webkitSpeechRecognition`) for hands-free voice search.
+* **Alphanumeric Grid Overlay (`G`):** Divides the 2K/4K viewport into discrete coordinate blocks (`A1` to `T12`) with sub-pixel mathematical accuracy. Toggle with the `G` key.
+
 ## Quick start
 
 ```powershell

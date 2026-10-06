@@ -102,6 +102,138 @@ app.registerExtension({
         readout.innerText = "Hover Block: [ -- ]";
         body.appendChild(readout);
 
+        // --- PROMPT SEARCH & VOICE INPUT (0 TOKENS / LOCAL DOM) ---
+        const promptContainer = document.createElement("div");
+        promptContainer.style.display = "flex";
+        promptContainer.style.gap = "4px";
+        promptContainer.style.alignItems = "center";
+
+        const promptInput = document.createElement("input");
+        promptInput.type = "text";
+        promptInput.placeholder = 'Find: "denoise", "seed", "supir"...';
+        promptInput.style.flex = "1";
+        promptInput.style.background = "rgba(0, 30, 45, 0.7)";
+        promptInput.style.border = "1px solid #00e5ff";
+        promptInput.style.borderRadius = "4px";
+        promptInput.style.color = "#ffffff";
+        promptInput.style.padding = "6px 8px";
+        promptInput.style.fontSize = "11px";
+        promptInput.style.outline = "none";
+        promptInput.style.fontFamily = "system-ui, sans-serif";
+
+        const voiceBtn = document.createElement("button");
+        voiceBtn.innerHTML = "🎙️";
+        voiceBtn.title = "Voice Prompt (Chrome Speech API)";
+        voiceBtn.style.background = "rgba(0, 229, 255, 0.15)";
+        voiceBtn.style.border = "1px solid #00e5ff";
+        voiceBtn.style.borderRadius = "4px";
+        voiceBtn.style.color = "#ffffff";
+        voiceBtn.style.cursor = "pointer";
+        voiceBtn.style.padding = "4px 8px";
+        voiceBtn.style.fontSize = "12px";
+
+        promptContainer.appendChild(promptInput);
+        promptContainer.appendChild(voiceBtn);
+        body.appendChild(promptContainer);
+
+        // Search feedback banner
+        const searchFeedback = document.createElement("div");
+        searchFeedback.style.fontSize = "10px";
+        searchFeedback.style.color = "#a7ffeb";
+        searchFeedback.style.fontFamily = "monospace";
+        searchFeedback.style.minHeight = "14px";
+        body.appendChild(searchFeedback);
+
+        function executeLocalPrompt(query) {
+            query = query.trim().toLowerCase();
+            if (!query) return;
+
+            let matchedNode = null;
+            let matchedWidget = null;
+
+            if (app.graph && app.graph._nodes) {
+                for (const node of app.graph._nodes) {
+                    const title = (node.title || "").toLowerCase();
+                    const type = (node.type || "").toLowerCase();
+                    if (title.includes(query) || type.includes(query)) {
+                        matchedNode = node;
+                        break;
+                    }
+                    if (node.widgets) {
+                        for (const w of node.widgets) {
+                            if ((w.name || "").toLowerCase().includes(query)) {
+                                matchedNode = node;
+                                matchedWidget = w.name;
+                                break;
+                            }
+                        }
+                    }
+                    if (matchedNode) break;
+                }
+            }
+
+            if (matchedNode) {
+                // Focus and center canvas on matched node
+                if (app.canvas && app.canvas.centerOnNode) {
+                    app.canvas.centerOnNode(matchedNode);
+                }
+                const label = matchedWidget ? `${matchedNode.title} -> ${matchedWidget}` : matchedNode.title;
+                searchFeedback.innerText = `✓ Found: ${label}`;
+                searchFeedback.style.color = "#69f0ae";
+
+                // Spotlight the node's current screen position
+                if (window.BrickHeartGrid) {
+                    // Compute node center in screen coords
+                    const canvasBox = app.canvas.canvas ? app.canvas.canvas.getBoundingClientRect() : { left: 0, top: 0 };
+                    const screenX = canvasBox.left + (matchedNode.pos[0] + matchedNode.size[0] / 2) * app.canvas.ds.scale + app.canvas.ds.offset[0];
+                    const screenY = canvasBox.top + (matchedNode.pos[1] + matchedNode.size[1] / 2) * app.canvas.ds.scale + app.canvas.ds.offset[1];
+                    const cell = window.BrickHeartGrid.coordsToCell(
+                        Math.max(0, Math.min(window.innerWidth - 1, screenX)),
+                        Math.max(0, Math.min(window.innerHeight - 1, screenY))
+                    );
+                    window.BrickHeartGrid.spotlight(cell, label);
+                }
+            } else {
+                searchFeedback.innerText = `✗ No match for: "${query}"`;
+                searchFeedback.style.color = "#ff8a80";
+            }
+        }
+
+        promptInput.onkeydown = (e) => {
+            if (e.key === "Enter") {
+                executeLocalPrompt(promptInput.value);
+            }
+        };
+
+        // Voice Recognition (Chrome Speech API)
+        const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRec) {
+            const recognition = new SpeechRec();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.onstart = () => {
+                voiceBtn.style.background = "#ff5252";
+                voiceBtn.innerText = "🔴";
+                searchFeedback.innerText = "Listening...";
+                searchFeedback.style.color = "#ff5252";
+            };
+            recognition.onresult = (event) => {
+                const text = event.results[0][0].transcript;
+                promptInput.value = text;
+                executeLocalPrompt(text);
+            };
+            recognition.onend = () => {
+                voiceBtn.style.background = "rgba(0, 229, 255, 0.15)";
+                voiceBtn.innerText = "🎙️";
+            };
+            voiceBtn.onclick = () => {
+                try { recognition.start(); } catch (_) { recognition.stop(); }
+            };
+        } else {
+            voiceBtn.style.opacity = "0.4";
+            voiceBtn.title = "Web Speech API not supported in this window";
+        }
+
         // Grid Toggle Button
         const toggleBtn = document.createElement("button");
         toggleBtn.id = "brickheart-grid-toggle";
