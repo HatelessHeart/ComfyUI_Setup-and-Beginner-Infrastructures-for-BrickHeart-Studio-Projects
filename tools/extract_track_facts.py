@@ -5,7 +5,8 @@ Usage:
       [--object-info http://127.0.0.1:8188/object_info | saved.json] [--out facts.md]
 
 For each workflow it prints, in left-to-right order:
-  - every node: id, type, title, current widget values (named when --object-info is given)
+  - every node: id, type, title, current widget values (named when --object-info is given,
+    or always for API-format files)
   - what feeds each node (source node/type via each wired input)
   - groups (names) if the workflow has any
 and, with --object-info, the node author's description + category for each type.
@@ -45,10 +46,40 @@ def short(v):
     return s if len(s) <= 160 else s[:157] + "..."
 
 
+def describe_api(path, d, oi, out):
+    """API-format workflow: {id: {class_type, inputs{name: value | [src_id, slot]}, _meta{title}}}.
+    Inputs are already named, so no /object_info guessing is needed. No positions are saved,
+    so nodes are listed in id order."""
+    out.append(f"## {path}  (API format)")
+    out.append(f"- nodes: {len(d)}")
+    out.append("")
+    types = set()
+    def key(k):
+        return (0, int(k)) if str(k).isdigit() else (1, str(k))
+    for nid in sorted(d, key=key):
+        n = d[nid]
+        t = n.get("class_type")
+        types.add(t)
+        title = (n.get("_meta") or {}).get("title") or t
+        out.append(f"### [{nid}] {t}  —  “{title}”")
+        fed = []
+        for name, v in (n.get("inputs") or {}).items():
+            if isinstance(v, list) and len(v) == 2 and isinstance(v[1], int) and str(v[0]) in d:
+                fed.append(f"{name} ← [{v[0]}] {d[str(v[0])].get('class_type')}")
+            else:
+                out.append(f"  - {name}: {short(v)}")
+        if fed:
+            out.append("  - fed by: " + "; ".join(fed))
+        out.append("")
+    return types
+
+
 def describe(path, oi, out):
     d = json.loads(Path(path).read_text(encoding="utf-8"))
-    if not isinstance(d.get("nodes"), list):
-        out.append(f"## {path}\n- not a UI-format workflow (no `nodes` list); re-save it from ComfyUI's menu (Save, not Save API)\n")
+    if isinstance(d, dict) and d and not isinstance(d.get("nodes"), list) and all(isinstance(v, dict) and "class_type" in v for v in d.values()):
+        return describe_api(path, d, oi, out)
+    if not isinstance(d, dict) or not isinstance(d.get("nodes"), list):
+        out.append(f"## {path}\n- unrecognised file: neither a UI workflow (`nodes` list) nor an API workflow (`class_type` entries)\n")
         return set()
     nodes = {n["id"]: n for n in d["nodes"]}
     link_src = {}
@@ -113,7 +144,10 @@ def main():
     out = ["# Track facts", ""]
     all_types = set()
     for f in files:
-        all_types |= describe(f, oi, out)
+        try:
+            all_types |= describe(f, oi, out)
+        except (OSError, ValueError) as e:
+            out.append(f"## {f}\n- could not read: {e}\n")
     if oi:
         out += ["## Node catalogue entries for the types above", ""]
         for t in sorted(x for x in all_types if x):
