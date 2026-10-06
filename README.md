@@ -11,6 +11,7 @@ An isolated, reproducible ComfyUI workspace with beginner-friendly workflows, ho
 | `download_model.py` | Model gatekeeper: audits size/destination and **asks for confirmation** before any download |
 | `config/extra_model_paths.yaml` | Maps model folders to `./models`; add extra entries to mount existing weights without copying |
 | `custom_nodes/comfyui-ui-tooltips` | Frontend extension: hover explanations for nodes/sockets/widgets, guided tour, connection helper, finder HUD |
+| `custom_nodes/brickheart-depth-tools` | Backend nodes: slice a depth map by depth fraction (near/far band, or N bands) for texturing guides |
 | `templates/`, `workflows/` | Workflow JSONs (API + UI canvas) and canvas previews |
 | `tools/inspect_workflows.py` | Read-only report: which lesson tracks match, and which node types lack curated tooltips, for any folder of workflow JSONs |
 | `tools/extract_track_facts.py` | Read-only: dumps a workflow's node chain, wiring, values and node-catalogue descriptions so a tour track can be written accurately |

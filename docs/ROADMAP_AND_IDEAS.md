@@ -102,3 +102,10 @@ Risks: seams between views, lighting baked into texture (use flat/unlit passes),
 - [ ] Gemini: verify on the real frontend that nodes inside subgraphs are found (`app.graph._nodes[i].subgraph`) and that `app.canvas.setGraph(sub)` enters/leaves them; the mesh-projection track steps 10-11 depend on it.
 - [ ] Instructor: review every lesson (set `"reviewed": true` per track once approved).
 - [ ] **Bitmap-to-material (B2M / ComfyUI-Chord) PBR track:** owner has B2M workflows (4 Chord examples in the scan: image_to_material, flux/sdxl/zimage t2i + image_to_material; nodes ChordLoadModel, ChordMaterialEstimation, ChordNormalToHeight, plus MakeCircularVAE/SeamlessTile). Owner request: "Add B2M PBR workflow and AO" (ambient occlusion). Needs facts first: the real outputs of `ChordMaterialEstimation` (is AO among them?), then a PBR-material track and, if AO is not produced, a way to derive/add it.
+
+### Depth slicing for texturing (owner request: "depth map extractor where you can slice the fraction")
+- [x] `custom_nodes/brickheart-depth-tools`: BrickHeart Depth Slice and Depth Slice Stack (math unit-tested with numpy; wrappers tested only against a torch stand-in).
+- [ ] Gemini: load in the real ComfyUI, run a depth map (estimate or mesh render pass) through both nodes, confirm outputs and tooltips.
+- [ ] Decide the depth source for the studio: depth-estimation node vs depth pass rendered from the mesh (exact). Add a template wiring Depth Slice into the mesh-projection pass (as position guide) once decided.
+- [ ] Possible follow-ups: depth to normal map; slice by absolute distance (not fraction) when the depth is metric; a tour track for the depth tools.
+- Interpretation note: "slice the fractal" was read as "slice a fraction of the depth range". Confirm with owner.

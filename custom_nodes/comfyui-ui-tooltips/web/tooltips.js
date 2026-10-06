@@ -259,6 +259,8 @@ function trimText(s) {
 }
 
 function describeWidget(widget) {
+    // A tooltip the node itself defines (node authors can set one per input) beats our generic wording.
+    if (!WIDGET_DESCRIPTIONS[widget.name] && widget.tooltip) return widget.tooltip;
     const known = WIDGET_DESCRIPTIONS[widget.name];
     if (known) return `${widget.name}: ${known}`;
     const t = widget.type;
