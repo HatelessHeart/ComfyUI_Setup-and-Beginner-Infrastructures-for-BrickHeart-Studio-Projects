@@ -10,7 +10,7 @@ Legend: `[ ]` open · `[~]` partly done · `[x]` done. Branch in use: `claude/ga
 ## 1. Where things stand
 
 **Built (all in this repo):**
-- Guided tour, data-driven: `custom_nodes/comfyui-ui-tooltips/web/tours/*.json` (6 tracks: 2D starter, Flux2 generation, Qwen generation, Qwen Edit inpainting, TRELLIS.2 mesh, mesh projection → albedo). Best-match selection, lesson chooser, subgraph support. Every track is `reviewed: false` and the card says "Draft lesson".
+- Guided tour (restores the learner's camera on exit; `BrickHeartTour.fitAll()` recovers a lost canvas), data-driven: `custom_nodes/comfyui-ui-tooltips/web/tours/*.json` (6 tracks: 2D starter, Flux2 generation, Qwen generation, Qwen Edit inpainting, TRELLIS.2 mesh, mesh projection → albedo). Best-match selection, lesson chooser, subgraph support. Every track is `reviewed: false` and the card says "Draft lesson".
 - Connection Helper (drag a wire, see what can plug in, using the live `/object_info`).
 - Tooltips on almost everything (~50 curated studio node types, generated descriptions for the rest).
 - Spatial Pilot HUD (finder, voice, grid overlay).
@@ -20,7 +20,9 @@ Legend: `[ ]` open · `[~]` partly done · `[x]` done. Branch in use: `claude/ga
 
 **Tested:** JS and JSON syntax, 13 depth-math tests (mutation-checked), 4 node-wiring tests against a torch *stand-in*, and the tour/helper in a headless-browser mock. **Verified live by Gemini on the real ComfyUI (frontend 1.53.6, Vue nodes):** tour node box, gold ring, Queue-button box, pan/zoom/resize, Connection Helper (83 candidates, click-to-add and wire).
 
-**Not yet verified on the real install:** the five new tracks, subgraph handling, the depth tools inside ComfyUI, the license scan.
+**Verified live since (Gemini, 2026-10-07):** `BHDepthSlice` and `BHDepthSliceStack` register under BrickHeart/depth in `/object_info` and both run on real PyTorch tensors (output shapes checked: depth `[1,256,256,3]`, mask `[1,256,256]`, histogram `[1,128,256,3]`, stack `[4,...]`); `tours/index.json` is served by ComfyUI. Not yet checked: output *values* of the depth nodes, and the tours running on real workflows.
+
+**Not yet verified on the real install:** the five new tracks running in the browser, subgraph handling, the license scan.
 
 ---
 
@@ -36,11 +38,11 @@ Legend: `[ ]` open · `[~]` partly done · `[x]` done. Branch in use: `claude/ga
 
 ## 3. Waiting on Gemini (real-install checks)
 
-- [ ] Re-run the tour on the 5 studio workflows; report which lesson opens, step counts, any missing cyan box / gold ring (screenshots).
+- [ ] Re-run the tour **in the browser** on the 5 studio workflows (Gemini so far confirmed the files are served and read the code, which is not a live run); report which lesson opens, step counts, any missing cyan box / gold ring (screenshots).
 - [ ] Subgraph check on `Qwen Edit Mesh Projection - Albedo`: do nodes inside the collapsed component appear in `app.graph._nodes[i].subgraph`, and does `app.canvas.setGraph(sub)` enter/leave it? Mesh-projection steps 10-11 depend on it.
-- [ ] Depth tools: load `brickheart-depth-tools`, confirm both nodes appear under BrickHeart/depth, run a depth map through them, check histogram preview and tooltips; run `tests/test_depth_slice.py`.
+- [~] Depth tools: registration and tensor execution confirmed (see Section 1). Still to check: look at the actual outputs and histogram in the UI (values, not just shapes), hover tooltips, `tests/test_depth_slice.py` on the real venv.
 - [ ] `python tools/scan_licenses.py G:\DEVstuFF\NEW --out docs/reports/license_scan.md --csv docs/reports/license_scan.csv`, push both.
-- [ ] B2M app: entry script, inputs/outputs, CLI options (can ComfyUI call it as a step?).
+- [ ] B2M app: Gemini says its technical notes are in `PROJECT_NOTES.md` inside that folder (not in this repo). Needed here: entry script, inputs/outputs, CLI options (can ComfyUI call it as a step?).
 - [ ] `PhotoSplat3D/turntable_merger.py`: first 30 lines, argument list, license files.
 - [ ] Chord workflows: `python tools/extract_track_facts.py <chord workflows> --object-info http://127.0.0.1:8188/object_info --out docs/reports/chord_facts.md`; report the output names of `ChordMaterialEstimation` (is there an AO output?).
 - [ ] Reconcile earlier answers that disagreed with the repo: workflow counts per folder, stage names, node descriptions in `/object_info`.
