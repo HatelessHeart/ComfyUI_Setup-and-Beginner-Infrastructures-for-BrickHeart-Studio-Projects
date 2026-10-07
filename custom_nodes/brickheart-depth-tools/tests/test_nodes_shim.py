@@ -28,7 +28,7 @@ def sphere_scene(H=96, W=96):
     return d, inside.astype(np.float32)
 
 def test_registered():
-    assert set(pkg.NODE_CLASS_MAPPINGS) == {"BHDepthSlice", "BHDepthSliceStack"}
+    assert set(pkg.NODE_CLASS_MAPPINGS) == {"BHDepthSlice", "BHDepthSliceStack", "BHDepthParallax"}
     for cls in pkg.NODE_CLASS_MAPPINGS.values():
         it = cls.INPUT_TYPES()
         assert "depth" in it["required"] and len(cls.RETURN_TYPES) == len(cls.RETURN_NAMES)
@@ -62,6 +62,29 @@ def test_stack_shapes_and_order():
     assert cover.min() >= 1.0                                               # 4 hard bands cover every pixel
     # nearest band first: with white=near, band 0 holds the bright centre of the ball
     assert masks.a[0][48, 48] == 1.0 and masks.a[3][48, 48] == 0.0
+
+def test_parallax_node():
+    d, subj = sphere_scene()
+    rgb = np.repeat(d[..., None], 3, -1).astype(np.float32)
+    img = FakeTensor(rgb[None]); depth = FakeTensor(rgb[None]); mask = FakeTensor(subj[None])
+    node = pkg.NODE_CLASS_MAPPINGS["BHDepthParallax"]()
+    (frames,) = node.run(img, depth, 12, 0.04, "sweep", 0.35, 2, True, True, 4, subject_mask=mask)
+    F = frames.a
+    assert F.shape == (12, 96, 96, 3) and F.dtype == np.float32 and F.min() >= -1e-6 and F.max() <= 1 + 1e-6
+    assert np.abs(F[0] - rgb).max() < 1e-5            # frame 0 is the rest pose
+    assert np.abs(F[3] - rgb).max() > 1e-3            # and the camera really moves
+    # size mismatch gives a clear error, not a silent crash
+    small = FakeTensor(np.zeros((1, 48, 48, 3), np.float32))
+    try:
+        node.run(img, small, 12, 0.04, "sweep", 0.35, 2, True, True, 4)
+    except ValueError as e:
+        assert "match" in str(e)
+    else:
+        raise AssertionError("expected ValueError for mismatched sizes")
+    # two images in, frames concatenated
+    two = FakeTensor(np.stack([rgb, rgb]))
+    (f2,) = node.run(two, two, 6, 0.04, "orbit", 0.35, 2, True, True, 4)
+    assert f2.a.shape[0] == 12
 
 if __name__ == "__main__":
     fails = 0

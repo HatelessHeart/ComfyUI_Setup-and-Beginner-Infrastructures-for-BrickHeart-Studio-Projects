@@ -20,6 +20,17 @@ Settings worth knowing: `white_is_near` (turn on for most depth estimators), `ro
 
 **Use a `subject_mask`** (for example from background removal) whenever the subject sits on a plain background. Without it the background's depth stretches or squashes the range and the fractions stop meaning "front of the object".
 
+**BrickHeart Depth Parallax (3D photo)**: turns a still image plus its depth map into a short, seamlessly looping camera move (a "3D photo"). Near things slide more than far things while one chosen depth (`focus`) stays still.
+| Setting | What it does |
+| --- | --- |
+| `motion` | `sweep` (side to side), `orbit` (a small circle), `push_in` (toward the picture and back). |
+| `strength` | The largest slide, as a fraction of the picture width (0.03 = 3%), for whatever is farthest in depth from the focus plane. |
+| `focus` | The depth that stays still (0 = nearest, 1 = farthest). |
+| `depth_blur` | Softens the depth map first to reduce tearing at depth edges. |
+| `refine_passes` | Quality vs speed. Too few passes leave a faint ghost edge on near objects; 6 is clean for most pictures. |
+
+Output is a batch of frames; connect it to ComfyUI's Save Animated WEBP / PNG node to get a clip (check the node name in your install). Because bad depth shows up as tearing and stretched edges, it also works as a quick check of whether a depth map is any good. Speed: about 1 second per megapixel per frame on a plain CPU, so try 512 to 768 pixels first.
+
 ## Where the depth map comes from
 This pack does not include a depth model and downloads nothing. Feed it:
 - the output of any depth-estimation node you have installed (for example a Depth Anything node), or
@@ -32,7 +43,8 @@ This pack does not include a depth model and downloads nothing. Feed it:
 
 ## Tests
 ```
-python tests/test_depth_slice.py     # math, needs only numpy
+python tests/test_depth_slice.py     # slicing math, needs only numpy
+python tests/test_depth_parallax.py  # parallax math, needs only numpy
 python tests/test_nodes_shim.py      # node wiring against a stand-in for torch (not real torch)
 ```
 The ComfyUI wrappers have not yet been run inside a real ComfyUI; confirm on your install.

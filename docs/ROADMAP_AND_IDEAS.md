@@ -40,6 +40,7 @@ Legend: `[ ]` open · `[~]` partly done · `[x]` done. Branch in use: `claude/ga
 
 - [ ] Re-run the tour **in the browser** on the 5 studio workflows (Gemini so far confirmed the files are served and read the code, which is not a live run); report which lesson opens, step counts, any missing cyan box / gold ring (screenshots).
 - [ ] Subgraph check on `Qwen Edit Mesh Projection - Albedo`: do nodes inside the collapsed component appear in `app.graph._nodes[i].subgraph`, and does `app.canvas.setGraph(sub)` enter/leave it? Mesh-projection steps 10-11 depend on it.
+- [ ] Depth Parallax node: restart ComfyUI, confirm it appears as "BrickHeart Depth Parallax (3D photo)", run image + depth through it into a Save Animated WEBP node, open the clip, send a screenshot or the file name. Also check that the Save node name exists in this install.
 - [~] Depth tools: registration and tensor execution confirmed (see Section 1). Still to check: look at the actual outputs and histogram in the UI (values, not just shapes), hover tooltips, `tests/test_depth_slice.py` on the real venv.
 - [ ] `python tools/scan_licenses.py G:\DEVstuFF\NEW --out docs/reports/license_scan.md --csv docs/reports/license_scan.csv`, push both.
 - [ ] B2M app: Gemini says its technical notes are in `PROJECT_NOTES.md` inside that folder (not in this repo). Needed here: entry script, inputs/outputs, CLI options (can ComfyUI call it as a step?).
@@ -100,6 +101,8 @@ Risks: seams between views, baked-in lighting (use flat/unlit passes), poorly se
 
 ### D. Depth tools
 - [x] Depth Slice + Depth Slice Stack built and math-tested (see Section 3 for real-install check).
+- [x] **BrickHeart Depth Parallax (3D photo)**: image + depth map to a looping camera-move clip. Added because the owner wanted something more interesting than upscaling. Math unit-tested (10 tests, mutation-checked) and checked visually on a synthetic scene; wrappers tested only against a torch stand-in; **not yet run in the real ComfyUI**. Known limits: stretching at sharp depth edges (backward warp), about 1 s per megapixel per frame on CPU.
+- [ ] Parallax: GPU path using `torch.nn.functional.grid_sample` (much faster; needs a real-torch test), optional foreground/background layer separation to reduce edge stretching, a ready-made template (Load Image, depth estimator, Parallax, Save Animated WEBP) once the depth source is decided.
 - [ ] Template wiring Depth Slice into the mesh-projection pass as the position guide, once the depth source is decided.
 - [ ] Possible follow-ups: depth to normal map; slice by absolute distance when depth is metric; a tour track for the depth tools.
 
